@@ -1,0 +1,43 @@
+{
+  "name": "Geartrain derived-value parameters",
+  "version": "0.1.0",
+  "note": "Thresholds used by the derived-value algorithms. Money in pence. Each set applies from effectiveFrom until the next set for the same key. Confirm with the tax adviser before go-live.",
+  "parameters": [
+    {
+      "key": "companySize",
+      "effectiveFrom": "2025-04-06",
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/46/section/382",
+      "value": {
+        "micro": { "turnover": 100000000, "balanceSheet": 50000000, "employees": 10 },
+        "small": { "turnover": 1500000000, "balanceSheet": 750000000, "employees": 50 },
+        "medium": { "turnover": 5400000000, "balanceSheet": 2700000000, "employees": 250 }
+      }
+    },
+    {
+      "key": "groupSizeGross",
+      "effectiveFrom": "2025-04-06",
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/46/section/383",
+      "value": {
+        "small": { "turnover": 1800000000, "balanceSheet": 900000000, "employees": 50 },
+        "medium": { "turnover": 6480000000, "balanceSheet": 3240000000, "employees": 250 }
+      }
+    },
+    {
+      "key": "vat",
+      "effectiveFrom": "2024-04-01",
+      "sourceUrl": "https://www.gov.uk/register-for-vat",
+      "value": { "registration": 9000000, "deregistration": 8800000 }
+    },
+    {
+      "key": "apprenticeshipLevy",
+      "effectiveFrom": "2017-04-06",
+      "sourceUrl": "https://www.gov.uk/guidance/pay-apprenticeship-levy",
+      "value": { "payBillThreshold": 300000000, "allowance": 1500000 }
+    },
+    {
+      "key": "ecctaLargeOrganisation",
+      "effectiveFrom": "2025-09-01",
+      "value": { "employees": 250, "turnover": 3600000000, "balanceSheet": 1800000000 }
+    }
+  ]
+}
