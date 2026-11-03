@@ -224,7 +224,7 @@ export const ApprovalCard = (p: { a: Approval }) => {
           {a.requiresVerification ? (
             <label>
               <span class="sub">Before approving, {a.requiresVerification}. Record who you spoke to, the number you called and when.</span>
-              <textarea name="note" required></textarea>
+              <textarea name="note"></textarea>
             </label>
           ) : (
             <input type="text" name="note" placeholder="Note (optional)" style="width:100%" />
