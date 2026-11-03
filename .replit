@@ -1,0 +1,11 @@
+# Runs the Geartrain demo (fake clients, stand-in Xero/HMRC/Companies House).
+modules = ["nodejs-22"]
+run = "corepack enable && pnpm install --frozen-lockfile && DEMO_DATE=${DEMO_DATE:-2026-11-03} pnpm --filter @geartrain/web start"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[deployment]
+run = ["sh", "-c", "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @geartrain/web start"]
+deploymentTarget = "cloudrun"

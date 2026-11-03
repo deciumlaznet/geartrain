@@ -2,10 +2,13 @@
   "name": "geartrain",
   "private": true,
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "validate-rules": "pnpm --filter @geartrain/rules-engine validate-rules"
+    "validate-rules": "pnpm --filter @geartrain/rules-engine validate-rules",
+    "start": "pnpm --filter @geartrain/web start"
   }
 }
