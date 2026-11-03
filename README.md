@@ -49,9 +49,6 @@ DEMO_DATE=2026-11-03 pnpm start                        # the demo web app on htt
 On Replit, import the GitHub repo and press Run: `.replit` installs and starts the demo. The demo has no
 sign-in and holds everything in memory, so it must only ever show fake clients.
 
-```sh
-```
-
 ### The fake clients
 
 | Client | Shape | What its history exercises |
