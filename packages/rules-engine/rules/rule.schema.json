@@ -263,6 +263,11 @@
               "type": "string"
             }
           }
+        },
+        "processKey": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$",
+          "description": "The pilot process that discharges this obligation, e.g. vatReturn"
         }
       }
     },

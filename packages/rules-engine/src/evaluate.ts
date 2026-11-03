@@ -35,6 +35,7 @@ export interface TaskDraft {
   deadline?: ISODate;
   /** With entity, rule and obligation, the idempotency key: re-runs never duplicate a task. */
   periodKey: string;
+  processKey?: string;
   overdue: boolean;
   note?: string;
 }
@@ -111,6 +112,7 @@ function obligationTasks(
       obligationId: o.id,
       title: o.title,
       mode: o.mode ?? rule.mode,
+      ...(o.processKey ? { processKey: o.processKey } : {}),
       ...(deadline ? { deadline } : {}),
       periodKey: periodKeyOverride ?? (recurring ? (anchors.periodEnd ?? deadline ?? triggerDate) : triggerDate),
       overdue: deadline !== undefined && deadline < asOf,

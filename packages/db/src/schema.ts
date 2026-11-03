@@ -40,6 +40,8 @@ export const clients = pgTable("clients", {
   sizeBand: text("size_band"),
   enabledModules: text("enabled_modules").array().notNull().default(sql`'{}'`),
   smartsheetWorkspaceId: text("smartsheet_workspace_id"),
+  /** Client configuration from the pilot process specs (B3): tone, chase cadence, sign-off contacts. */
+  settings: jsonb("settings").notNull().default(sql`'{}'::jsonb`),
   createdAt: createdAt(),
 });
 
@@ -49,6 +51,8 @@ export const legalEntities = pgTable(
     id: id(),
     clientId: uuid("client_id").notNull().references(() => clients.id),
     name: text("name").notNull(),
+    /** Current legal form; the dated history lives in facts (field legalForm). */
+    legalForm: legalForm("legal_form").notNull(),
     companyNumber: text("company_number"),
     vatNumber: text("vat_number"),
     payeReference: text("paye_reference"),
@@ -216,6 +220,8 @@ export const obligationTasks = pgTable(
     deadline: date("deadline"),
     state: taskState("state").notNull().default("open"),
     evidence: jsonb("evidence"),
+    /** The pilot process that discharges this task (e.g. vatReturn, selfAssessment). */
+    processKey: text("process_key"),
     smartsheetRowId: text("smartsheet_row_id"),
     createdAt: createdAt(),
   },
@@ -224,6 +230,55 @@ export const obligationTasks = pgTable(
     index("obligation_tasks_calendar_idx").on(t.clientId, t.deadline),
   ],
 );
+
+// ---- Bookkeeping configuration and evidence --------------------------------------
+
+/** How a payee or bank description is coded in the ledger. Proposed by agents, approved by people. */
+export const codingRules = pgTable(
+  "coding_rules",
+  {
+    id: id(),
+    clientId: uuid("client_id").notNull().references(() => clients.id),
+    entityId: uuid("entity_id").notNull().references(() => legalEntities.id),
+    matchField: text("match_field").notNull(), // payee, description, reference
+    matchPattern: text("match_pattern").notNull(),
+    accountCode: text("account_code").notNull(),
+    taxType: text("tax_type"),
+    proposedBy: text("proposed_by").notNull(),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    active: boolean("active").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index("coding_rules_entity_idx").on(t.entityId, t.active)],
+);
+
+/** Maps an entity's ledger accounts to HMRC categories (Self Assessment boxes, MTD categories, VAT boxes). */
+export const taxCategoryMaps = pgTable(
+  "tax_category_maps",
+  {
+    clientId: uuid("client_id").notNull().references(() => clients.id),
+    entityId: uuid("entity_id").notNull().references(() => legalEntities.id),
+    accountCode: text("account_code").notNull(),
+    scheme: text("scheme").notNull(), // selfAssessment, mtdIncomeTax, vat
+    category: text("category").notNull(),
+    confirmedBy: uuid("confirmed_by").references(() => users.id),
+  },
+  (t) => [primaryKey({ columns: [t.entityId, t.accountCode, t.scheme] })],
+);
+
+/** Closes every task: what was used, what changed in Xero, who approved, kept for the retention period. */
+export const taskEvidence = pgTable("task_evidence", {
+  id: id(),
+  clientId: uuid("client_id").notNull().references(() => clients.id),
+  taskId: uuid("task_id").notNull().references(() => obligationTasks.id),
+  inputs: jsonb("inputs").notNull(),
+  ledgerObjectIds: text("ledger_object_ids").array().notNull().default(sql`'{}'`),
+  documents: text("documents").array().notNull().default(sql`'{}'`),
+  approverId: uuid("approver_id").references(() => users.id),
+  exceptionNote: text("exception_note"),
+  retainUntil: date("retain_until").notNull(),
+  createdAt: createdAt(),
+});
 
 // ---- Approvals and audit ---------------------------------------------------------
 

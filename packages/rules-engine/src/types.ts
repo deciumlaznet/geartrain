@@ -66,6 +66,7 @@ export interface Obligation {
   mode?: Mode;
   evidence?: string[];
   penalty?: { type?: string; text?: string };
+  processKey?: string;
 }
 
 export interface Rule {
