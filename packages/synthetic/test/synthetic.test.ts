@@ -1,11 +1,8 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { addMonthsToMonth, parameterAt, vatBackwardTest, type ParameterFile } from "@geartrain/rules-engine";
+import { addMonthsToMonth, loadParameters, parameterAt, vatBackwardTest } from "@geartrain/rules-engine";
 import { allPlans, copperleaf, fenwick, generateClient, northgate, type ClientDataset } from "../src/index.ts";
 
-const params = JSON.parse(
-  readFileSync(new URL("../../rules-engine/rules/parameters.json", import.meta.url), "utf8"),
-) as ParameterFile;
+const params = loadParameters();
 
 const data: Record<string, ClientDataset> = Object.fromEntries(allPlans.map((p) => [p.profile.key, generateClient(p)]));
 const sum = <T>(xs: T[], f: (x: T) => number) => xs.reduce((s, x) => s + f(x), 0);

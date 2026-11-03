@@ -7,3 +7,4 @@ export * from "./versions.ts";
 export * from "./deadlines.ts";
 export * from "./evaluate.ts";
 export * from "./validate.ts";
+export * from "./files.ts";
