@@ -8,6 +8,25 @@ importers:
 
   .: {}
 
+  packages/connectors:
+    dependencies:
+      '@geartrain/rules-engine':
+        specifier: workspace:*
+        version: link:../rules-engine
+      '@geartrain/synthetic':
+        specifier: workspace:*
+        version: link:../synthetic
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+
   packages/db:
     dependencies:
       drizzle-orm:
@@ -48,6 +67,31 @@ importers:
       '@geartrain/rules-engine':
         specifier: workspace:*
         version: link:../rules-engine
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+
+  packages/worker:
+    dependencies:
+      '@geartrain/connectors':
+        specifier: workspace:*
+        version: link:../connectors
+      '@geartrain/rules-engine':
+        specifier: workspace:*
+        version: link:../rules-engine
+      '@geartrain/synthetic':
+        specifier: workspace:*
+        version: link:../synthetic
     devDependencies:
       '@types/node':
         specifier: 22.20.5

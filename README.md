@@ -16,9 +16,11 @@ review the judgement calls.
 | `packages/rules-engine/rules/growth-rules.json` | The rule file (Research's v0.3.1, 72 rules), validated against `rule.schema.json` |
 | `packages/rules-engine/rules/parameters.json` | Dated thresholds for company size, VAT, apprenticeship levy and ECCTA |
 | `packages/db` | Postgres schema (Drizzle), migrations, and row-level security keeping clients apart |
+| `packages/connectors` | Interfaces for the ledger (Xero first), HMRC and Companies House, with in-memory stand-ins that serve the fake clients and keep the real services' limits |
+| `packages/worker` | Builds each client's obligations calendar from the rules engine, HMRC obligations and Companies House dates |
 | `packages/synthetic` | Three fake clients with April 2022 to October 2026 histories: ledger, bank feed, payroll, filings, letters, supplier documents and planted edge cases for red-teaming |
 
-Still to come: mock Xero, HMRC and Companies House services, the worker that runs the engine against Xero and payroll data,
+Still to come:
 the Smartsheet sync, the Replit web app, and the agents.
 
 ## Principles the code holds to
@@ -40,6 +42,7 @@ pnpm test            # unit tests and the 16 acceptance tests from the build spe
 pnpm typecheck
 pnpm validate-rules  # schema and version-overlap checks on the rule file
 pnpm --filter @geartrain/synthetic generate   # writes the fake clients to data/synthetic (gitignored)
+pnpm --filter @geartrain/worker calendar 2026-11-03   # prints each fake client's obligations calendar
 ```
 
 ### The fake clients

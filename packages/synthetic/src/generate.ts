@@ -13,11 +13,10 @@ import {
   isWeekend,
   lastDayOfMonth,
   monthsBetweenInclusive,
+  loadParameters,
   parameterAt,
   rolling12,
-  type ParameterFile,
 } from "@geartrain/rules-engine";
-import { readFileSync } from "node:fs";
 import type { ClientPlan, VariableSpend } from "./clients.ts";
 import type {
   BankLine,
@@ -48,9 +47,7 @@ export const DEFAULT_RANGE: GenerateOptions = { start: "2022-04", end: "2026-10"
 const VAT_RATE = 0.2;
 // Thresholds come from the engine's dated parameter file, so the fake history
 // uses the threshold that applied at the time (£85k before April 2024).
-const PARAMETERS = JSON.parse(
-  readFileSync(new URL("../../rules-engine/rules/parameters.json", import.meta.url), "utf8"),
-) as ParameterFile;
+const PARAMETERS = loadParameters();
 const vatThreshold = (month: Month) => parameterAt(PARAMETERS, "vat", lastDayOfMonth(`${month}-01`)).registration;
 
 const GIVEN = ["Amira", "Ben", "Chloe", "Dev", "Ella", "Finn", "Grace", "Harun", "Isla", "Jonah", "Keira", "Leo", "Maya", "Niall", "Orla", "Pavel", "Rosa", "Sian", "Theo", "Uma", "Vikram", "Wren", "Yusuf", "Zara"];

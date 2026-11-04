@@ -53,7 +53,7 @@ export interface SalesInvoice {
   netPence: number;
   vatPence: number;
   totalPence: number;
-  status: "paid" | "partlyPaid" | "authorised" | "voided" | "writtenOff";
+  status: "draft" | "paid" | "partlyPaid" | "authorised" | "voided" | "writtenOff";
   payments: { date: ISODate; amountPence: number; bankLineId: string }[];
 }
 
