@@ -1,0 +1,5550 @@
+{
+  "name": "Geartrain growth rules",
+  "version": "0.3.1",
+  "asOf": "2026-10-31",
+  "status": "Draft for expert review. Built against /mnt/project-files/geartrain/engineering/rule.schema.json. Money in pence. Only rules with verified true may create client-facing tasks. sourceUrls were written from known gov.uk and legislation.gov.uk paths and need a link check (Research could not reach those sites from its environment).",
+  "rules": [
+    {
+      "id": "sa-registration",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Legal form",
+      "title": "Self Assessment",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "fact.legalForm",
+            "op": "in",
+            "value": [
+              "soleTrader",
+              "partnership"
+            ]
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-for-self-assessment",
+          "title": "Register for Self Assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "taxYearEnd",
+            "offset": {
+              "months": 6
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "file-and-pay-by-31-january",
+          "title": "File and pay by 31 January",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "01-31"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 40000,
+        "text": "£100 late filing, then daily and percentage penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "mtd-itsa-2026",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Making Tax Digital for Income Tax",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "soleTrader"
+          },
+          {
+            "field": "derived.mtdQualifyingIncome",
+            "op": "gt",
+            "value": 5000000
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "derived.mtdQualifyingIncome",
+          "op": "gte",
+          "value": 4000000
+        },
+        "project": {
+          "series": "series.turnoverRolling12",
+          "threshold": 5000000
+        }
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "digital-records",
+          "title": "Digital records",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "four-quarterly-updates",
+          "title": "Four quarterly updates",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1,
+              "days": 2
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "final-declaration-by-31-january",
+          "title": "Final declaration by 31 January",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "01-31"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [
+        {
+          "id": "confirm-mtd-exit",
+          "title": "Confirm with HMRC that Making Tax Digital no longer applies (after three years below the threshold)",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          }
+        }
+      ],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.gov.uk/guidance/check-if-youre-eligible-for-making-tax-digital-for-income-tax",
+      "verified": true,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "Penalty points; £200 at the threshold",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "From 6 April 2026. Threshold falls to 30,000 (April 2027) and 20,000 (April 2028). Checked against GOV.UK on 31 Oct 2026: qualifying income above £50,000 in 2024-25 means start 6 April 2026; above £30,000 in 2025-26 means 6 April 2027; above £20,000 in 2026-27 means 6 April 2028. HMRC tests the Self Assessment return for the tax year two years before the start. GOV.UK does not state the exit rule."
+    },
+    {
+      "id": "mtd-itsa-2027",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Making Tax Digital for Income Tax (2027 wave)",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "enacted",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "soleTrader"
+          },
+          {
+            "field": "derived.mtdQualifyingIncome",
+            "op": "gt",
+            "value": 3000000
+          },
+          {
+            "field": "derived.mtdQualifyingIncome",
+            "op": "lt",
+            "value": 5000100
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "quarterly-updates-from-april-2027",
+          "title": "Quarterly updates from April 2027",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1,
+              "days": 2
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2027-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "Penalty points; £200 at the threshold, plus late payment penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06"
+    },
+    {
+      "id": "corporation-tax",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Legal form",
+      "title": "Corporation Tax",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "ltd"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-within-3-months-of-trading",
+          "title": "Register within 3 months of trading",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 3
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "pay-9-months-and-1-day",
+          "title": "Pay 9 months and 1 day after year end",
+          "recurrence": {
+            "every": "accountingPeriod"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 9,
+              "days": 1
+            },
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "file-ct600-within-12-months",
+          "title": "File CT600 within 12 months",
+          "recurrence": {
+            "every": "accountingPeriod"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "£100 late return, rising",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "vat-registration",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "VAT registration and Making Tax Digital for VAT",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.vatRegistered",
+            "op": "eq",
+            "value": false
+          },
+          {
+            "field": "derived.vatBackwardTestMet",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "series.taxableTurnoverRolling12",
+          "op": "gte",
+          "value": 7650000
+        },
+        "project": {
+          "series": "series.taxableTurnoverRolling12",
+          "threshold": 9000000
+        }
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-for-vat",
+          "title": "Register for VAT",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 100000,
+        "text": "Failure-to-notify penalty up to 100% of VAT due; £200 points penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "vat-returns",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "VAT returns under Making Tax Digital",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "field": "fact.vatRegistered",
+        "op": "eq",
+        "value": true
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "digital-vat-records",
+          "title": "Keep digital VAT records",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          }
+        },
+        {
+          "id": "vat-return-and-payment",
+          "title": "Submit VAT return and pay through recognised software",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1,
+              "days": 7
+            },
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [
+        {
+          "id": "final-vat-return",
+          "title": "Final VAT return after deregistration",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 1,
+              "days": 7
+            }
+          }
+        }
+      ],
+      "effectiveFrom": "2022-11-01",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "Penalty points; £200 at the threshold, plus late payment penalties and interest",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "Split from vat-registration in v0.3 so returns continue after registration. effectiveFrom is the start of the current points-based penalty regime."
+    },
+    {
+      "id": "bookkeeping-core",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Always",
+      "title": "Records and late-payment rights",
+      "module": "Bookkeeping and credit control",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": "always",
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "keep-business-records-about-6-years",
+          "title": "Keep business records about 6 years",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "statutory-interest-and-compensation-on-late",
+          "title": "Statutory interest and compensation on late B2B invoices",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 300000,
+        "text": "Up to £3,000 for not keeping adequate records",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "companies-house-core",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Legal form",
+      "title": "Companies House duties",
+      "module": "Governance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "ltd"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "annual-accounts-within-9-months",
+          "title": "Annual accounts within 9 months",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "confirmation-statement-every-12-months",
+          "title": "Confirmation statement every 12 months",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "days": 14
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "registers-and-people-with-significant-control",
+          "title": "Registers and people with significant control",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "identity-verification-for-directors-and-pscs",
+          "title": "Identity verification for directors and PSCs",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "trading-disclosures-on-website-and-invoices",
+          "title": "Trading disclosures on website and invoices",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "software-only-filing-from-1-april",
+          "title": "Software-only filing from 1 April 2028",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/46/section/442",
+      "verified": true,
+      "penalty": {
+        "amountPence": 75000,
+        "text": "Late accounts £150 to £1,500, doubled if late two years running",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: identity-verification-for-directors-and-pscs, software-only-filing-from-1-april."
+    },
+    {
+      "id": "company-small",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Small company accounts (above micro-entity)",
+      "module": "Governance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "ltd"
+          },
+          {
+            "field": "derived.companySize",
+            "op": "sizeAtLeast",
+            "value": "small"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "sizeBasis": "entity",
+      "obligations": [
+        {
+          "id": "fuller-accounts-than-micro-entity",
+          "title": "Fuller accounts than micro-entity",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "from-2028-file-profit-and-loss",
+          "title": "From 2028 file profit and loss account and directors' report",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/46/section/382",
+      "verified": true,
+      "penalty": {
+        "amountPence": 75000,
+        "text": "Late accounts £150 to £1,500, doubled if late two years running",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: from-2028-file-profit-and-loss."
+    },
+    {
+      "id": "company-medium",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Medium-sized company",
+      "module": "Governance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "ltd"
+          },
+          {
+            "field": "derived.companySize",
+            "op": "sizeAtLeast",
+            "value": "medium"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "sizeBasis": "entity",
+      "obligations": [
+        {
+          "id": "fuller-accounts",
+          "title": "Fuller accounts",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "statutory-audit",
+          "title": "Statutory audit",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/46/section/465",
+      "verified": true,
+      "penalty": {
+        "amountPence": 150000,
+        "text": "Late accounts up to £1,500; directors can be prosecuted",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "company-large",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Large company duties",
+      "module": "Governance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "ltd"
+          },
+          {
+            "field": "derived.companySize",
+            "op": "sizeAtLeast",
+            "value": "large"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "sizeBasis": "entity",
+      "obligations": [
+        {
+          "id": "full-strategic-report-and-section-172",
+          "title": "Full strategic report and section 172 statement",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "payment-practices-reporting-every-six-months",
+          "title": "Payment practices reporting every six months",
+          "recurrence": {
+            "every": "monthly",
+            "interval": 6
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "streamlined-energy-and-carbon-reporting",
+          "title": "Streamlined energy and carbon reporting",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 150000,
+        "text": "Late accounts up to £1,500; criminal offences for missed reports such as payment practices",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date Default deadline (trigger date + 30 days), to confirm: payment-practices-reporting-every-six-months"
+    },
+    {
+      "id": "employer-basics",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Becoming an employer",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "register-as-employer",
+          "title": "Register as an employer with HMRC before the first payday",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "full-payment-submission",
+          "title": "Payroll submission (FPS) on or before each payday",
+          "recurrence": {
+            "every": "monthly"
+          },
+          "deadline": {
+            "anchor": "payday",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "pay-paye",
+          "title": "Pay PAYE and National Insurance to HMRC",
+          "recurrence": {
+            "every": "taxMonth"
+          },
+          "deadline": {
+            "anchor": "taxMonthEnd",
+            "offset": {
+              "days": 17
+            },
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "national-minimum-and-living-wage",
+          "title": "National Minimum and Living Wage",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "written-statement-of-particulars-from-day",
+          "title": "Written statement of particulars from day one",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "working-time-and-holiday-pay",
+          "title": "Working time and holiday pay",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "statutory-sick-family-leave-and-pay",
+          "title": "Statutory sick, family leave and pay",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "whistleblowing-protection",
+          "title": "Whistleblowing protection",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "neonatal-care-leave-and-carer-s",
+          "title": "Neonatal care leave and carer's leave",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [
+        {
+          "id": "final-payroll-submission",
+          "title": "Final payroll submission and P45 for the last employee",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          }
+        },
+        {
+          "id": "close-paye-scheme",
+          "title": "Close the PAYE scheme if no more employees are expected",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          }
+        }
+      ],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 200000,
+        "text": "Minimum wage arrears plus penalty of 200%; RTI late filing penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: national-minimum-and-living-wage, written-statement-of-particulars-from-day, working-time-and-holiday-pay, statutory-sick-family-leave-and-pay, whistleblowing-protection, neonatal-care-leave-and-carer-s."
+    },
+    {
+      "id": "auto-enrolment",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Pension auto-enrolment",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "assess-and-enrol-eligible-staff",
+          "title": "Assess and enrol eligible staff",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 42
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "minimum-8-total-contributions",
+          "title": "Minimum 8% total contributions",
+          "recurrence": {
+            "every": "monthly"
+          },
+          "deadline": {
+            "anchor": "payday",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "declaration-of-compliance-to-the-pensions",
+          "title": "Declaration of compliance to The Pensions Regulator",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 5
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "re-enrolment",
+          "title": "Re-enrol eligible staff and re-declare compliance every three years",
+          "recurrence": {
+            "every": "annual",
+            "interval": 3
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 36
+            }
+          },
+          "remindDaysBefore": [
+            60,
+            30,
+            14
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 40000,
+        "text": "£400 fixed penalty, then escalating daily penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "employers-liability",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Employers' liability insurance",
+      "module": "Risk and insurance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "hold-cover",
+          "title": "Hold cover of at least £5 million from the first day of employment",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "certificate-available-to-staff",
+          "title": "Certificate available to staff",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 250000,
+        "text": "Up to £2,500 for each day without cover",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "employment-rights-act-2025",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Employment Rights Act 2025 changes",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "sick-pay-from-day-one-april",
+          "title": "Sick pay from day one (April 2026)",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "duty-to-prevent-sexual-harassment-including",
+          "title": "Duty to prevent sexual harassment, including third parties (October 2026)",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "six-month-unfair-dismissal-qualifying-period",
+          "title": "Six-month unfair dismissal qualifying period (January 2027)",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1500000,
+        "text": "Tribunal awards and defence costs (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "Previously verified against a secondary source; needs a gov.uk or legislation.gov.uk source before verified can be true."
+    },
+    {
+      "id": "health-safety-basics",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Health and safety basics",
+      "module": "Health and safety",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "risk-assessment",
+          "title": "Risk assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "first-aid-and-accident-book",
+          "title": "First aid and accident book",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "health-and-safety-law-poster",
+          "title": "Health and safety law poster",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "riddor-reporting",
+          "title": "RIDDOR reporting",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "HSE fee for intervention charged by the hour, plus fines (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: risk-assessment, first-aid-and-accident-book, health-and-safety-law-poster, riddor-reporting."
+    },
+    {
+      "id": "health-safety-written",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Written health and safety records",
+      "module": "Health and safety",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 5
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "derived.headcount",
+          "op": "gte",
+          "value": 4
+        },
+        "project": {
+          "series": "series.headcountEndOfMonth",
+          "threshold": 5
+        }
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "written-health-and-safety-policy",
+          "title": "Written health and safety policy",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "recorded-risk-assessments",
+          "title": "Recorded risk assessments",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "recorded-fire-risk-assessment",
+          "title": "Recorded fire risk assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/1974/37/section/2",
+      "verified": true,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Fines vary with harm and turnover",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: written-health-and-safety-policy, recorded-risk-assessments, recorded-fire-risk-assessment."
+    },
+    {
+      "id": "workplace-recycling-england",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Jurisdiction",
+      "title": "Workplace recycling (England)",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 10
+          },
+          {
+            "field": "fact.nations",
+            "op": "has",
+            "value": "england"
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "separate-recycling-streams",
+          "title": "Separate recycling streams",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 50000,
+        "text": "Environment Agency enforcement; amounts not fixed (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "Smaller firms follow later. effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: separate-recycling-streams."
+    },
+    {
+      "id": "collective-redundancy-20",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Event",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "human",
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 15000000,
+        "text": "Protective award up to 90 days' pay per affected employee; HR1 failure is a criminal offence (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "title": "Collective redundancy consultation (20 to 99)",
+      "trigger": "event",
+      "event": {
+        "type": "redundancyProposed",
+        "where": {
+          "all": [
+            {
+              "field": "payload.count90DaysAtEstablishment",
+              "op": "gte",
+              "value": 20
+            },
+            {
+              "field": "payload.count90DaysAtEstablishment",
+              "op": "lt",
+              "value": 100
+            }
+          ]
+        }
+      },
+      "obligations": [
+        {
+          "id": "start-consultation",
+          "title": "Start collective consultation with representatives",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -30
+            },
+            "payloadField": "payload.firstDismissalDate"
+          },
+          "mode": "human"
+        },
+        {
+          "id": "notify-hr1",
+          "title": "Notify the government on form HR1",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -30
+            },
+            "payloadField": "payload.firstDismissalDate"
+          },
+          "mode": "signoff"
+        }
+      ],
+      "note": "Event rule replacing the v0.2 headcount rule. Deadline 30 days before the first dismissal."
+    },
+    {
+      "id": "collective-redundancy-100",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Event",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "human",
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 15000000,
+        "text": "Protective award up to 90 days' pay per affected employee; HR1 failure is a criminal offence (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "title": "Collective redundancy consultation (100 or more)",
+      "trigger": "event",
+      "event": {
+        "type": "redundancyProposed",
+        "where": {
+          "all": [
+            {
+              "field": "payload.count90DaysAtEstablishment",
+              "op": "gte",
+              "value": 100
+            }
+          ]
+        }
+      },
+      "obligations": [
+        {
+          "id": "start-consultation",
+          "title": "Start collective consultation with representatives",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -45
+            },
+            "payloadField": "payload.firstDismissalDate"
+          },
+          "mode": "human"
+        },
+        {
+          "id": "notify-hr1",
+          "title": "Notify the government on form HR1",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -45
+            },
+            "payloadField": "payload.firstDismissalDate"
+          },
+          "mode": "signoff"
+        }
+      ],
+      "note": "Event rule replacing the v0.2 headcount rule. Deadline 45 days before the first dismissal."
+    },
+    {
+      "id": "union-recognition",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Statutory union recognition",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 21
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "onDay",
+      "obligations": [
+        {
+          "id": "a-union-can-apply-for-statutory",
+          "title": "A union can apply for statutory recognition",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Central Arbitration Committee process; no direct fine",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: a-union-can-apply-for-statutory."
+    },
+    {
+      "id": "information-consultation",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Information and consultation of employees",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 50
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "derived.headcount",
+          "op": "gte",
+          "value": 45
+        },
+        "project": {
+          "series": "series.headcountEndOfMonth",
+          "threshold": 50
+        }
+      },
+      "exitAfter": 3,
+      "headcountBasis": "average12Months",
+      "obligations": [
+        {
+          "id": "set-up-arrangements-if-staff-request",
+          "title": "Set up arrangements if staff request them",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 7500000,
+        "text": "Central Arbitration Committee penalty up to £75,000",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: set-up-arrangements-if-staff-request."
+    },
+    {
+      "id": "apprenticeship-levy",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Apprenticeship levy",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.payBillConnectedAnnual",
+            "op": "gt",
+            "value": 300000000
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "derived.payBillConnectedAnnual",
+          "op": "gte",
+          "value": 270000000
+        },
+        "project": {
+          "series": "series.payBillClass1Rolling12",
+          "threshold": 300000000
+        }
+      },
+      "exitAfter": 0,
+      "sizeBasis": "connected",
+      "obligations": [
+        {
+          "id": "pay-0-5-of-pay-bill",
+          "title": "Pay 0.5% of pay bill through PAYE, less the allowance",
+          "recurrence": {
+            "every": "taxMonth"
+          },
+          "deadline": {
+            "anchor": "taxMonthEnd",
+            "offset": {
+              "days": 17
+            },
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [
+        {
+          "id": "stop-levy",
+          "title": "Stop levy declarations",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          }
+        }
+      ],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 100000,
+        "text": "Interest and penalties on underpaid PAYE (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "gender-pay-gap",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Gender pay gap reporting",
+      "module": "Payroll and HR",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 250
+          }
+        ]
+      },
+      "warn": {
+        "when": {
+          "field": "derived.headcount",
+          "op": "gte",
+          "value": 225
+        },
+        "project": {
+          "series": "series.headcountEndOfMonth",
+          "threshold": 250
+        }
+      },
+      "exitAfter": 3,
+      "headcountBasis": "onDay",
+      "obligations": [
+        {
+          "id": "annual-snapshot-and-publication",
+          "title": "Annual snapshot and publication",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "snapshotDate",
+            "offset": {
+              "months": 12,
+              "days": -1
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Enforcement by the Equality and Human Rights Commission",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "esos",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "ESOS energy audits",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 250
+          },
+          {
+            "all": [
+              {
+                "field": "derived.turnoverFY",
+                "op": "gt",
+                "value": 4400000000
+              },
+              {
+                "field": "derived.balanceSheetTotal",
+                "op": "gt",
+                "value": 3800000000
+              }
+            ]
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "sizeBasis": "group",
+      "obligations": [
+        {
+          "id": "energy-audit-every-four-years",
+          "title": "Energy audit every four years",
+          "recurrence": {
+            "every": "annual",
+            "interval": 4
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 5000000,
+        "text": "Up to £50,000 plus £500 a day for up to 80 days",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date Default deadline (trigger date + 30 days), to confirm: energy-audit-every-four-years"
+    },
+    {
+      "id": "failure-to-prevent-fraud",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Failure to prevent fraud offence",
+      "module": "Risk and insurance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.largeOrganisationEccta",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "sizeBasis": "group",
+      "obligations": [
+        {
+          "id": "reasonable-fraud-prevention-procedures",
+          "title": "Reasonable fraud-prevention procedures",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "text": "Unlimited fine; not counted in the business case",
+        "basis": "unlimited"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: reasonable-fraud-prevention-procedures."
+    },
+    {
+      "id": "modern-slavery",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Modern slavery statement",
+      "module": "Procurement",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.turnoverFY",
+            "op": "gte",
+            "value": 3600000000
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "publish-an-annual-statement",
+          "title": "Publish an annual statement",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 6
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Home Office can seek an injunction; reputational risk",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "climate-disclosures",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Headcount",
+      "title": "Climate-related financial disclosures",
+      "module": "Governance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.headcount",
+            "op": "gte",
+            "value": 500
+          },
+          {
+            "field": "derived.turnoverFY",
+            "op": "gt",
+            "value": 50000000000
+          }
+        ]
+      },
+      "exitAfter": 3,
+      "headcountBasis": "presentNow",
+      "obligations": [
+        {
+          "id": "climate-disclosures-in-the-strategic-report",
+          "title": "Climate disclosures in the strategic report",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "text": "Financial Reporting Council enforcement; not counted in the business case",
+        "basis": "unlimited"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "packaging-epr",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Packaging extended producer responsibility",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.turnoverFY",
+            "op": "gt",
+            "value": 100000000
+          },
+          {
+            "field": "fact.packagingTonnes",
+            "op": "gt",
+            "value": 25
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "report-packaging-data",
+          "title": "Report packaging data",
+          "recurrence": {
+            "every": "monthly",
+            "interval": 6
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "pay-fees",
+          "title": "Pay fees",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Environment Agency penalties plus back fees (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date Default deadline (trigger date + 30 days), to confirm: report-packaging-data, pay-fees"
+    },
+    {
+      "id": "data-protection",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Always",
+      "title": "UK GDPR and the ICO fee",
+      "module": "Data protection",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": "always",
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "privacy-notice-and-records-of-processing",
+          "title": "Privacy notice and records of processing",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "annual-ico-data-protection-fee",
+          "title": "Annual ICO data protection fee",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "breach-reporting-within-72-hours",
+          "title": "Breach reporting within 72 hours",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "subject-access-within-one-month",
+          "title": "Subject access within one month",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 400000,
+        "text": "Penalty for not paying the ICO fee; fines for breaches",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: breach-reporting-within-72-hours, subject-access-within-one-month."
+    },
+    {
+      "id": "pecr",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Electronic marketing and cookies",
+      "module": "Sales and consumer",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "emailMarketing"
+          },
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "onlineSales"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "consent-for-marketing-emails-and-texts",
+          "title": "Consent for marketing emails and texts",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "cookie-consent",
+          "title": "Cookie consent",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 2000000,
+        "text": "ICO fines for unlawful marketing or cookies (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: consent-for-marketing-emails-and-texts, cookie-consent."
+    },
+    {
+      "id": "consumer-law",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Consumer law",
+      "module": "Sales and consumer",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "b2c"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "consumer-rights-act-2015",
+          "title": "Consumer Rights Act 2015",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "digital-markets-competition-and-consumers-act",
+          "title": "Digital Markets, Competition and Consumers Act 2024: no fake reviews or drip pricing",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "Refunds, Trading Standards action; CMA can fine up to 10% of turnover (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: consumer-rights-act-2015, digital-markets-competition-and-consumers-act."
+    },
+    {
+      "id": "distance-selling",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Online and distance selling",
+      "module": "Sales and consumer",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "b2c"
+          },
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "onlineSales"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "pre-contract-information",
+          "title": "Pre-contract information",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "14-day-cancellation-right",
+          "title": "14-day cancellation right",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 200000,
+        "text": "Refunds; cancellation period extends to 12 months if information is missing (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: pre-contract-information, 14-day-cancellation-right."
+    },
+    {
+      "id": "public-sector-supplier",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Selling to the public sector",
+      "module": "Procurement",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "publicSectorSupplier"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "procurement-act-2023-tendering-rules",
+          "title": "Procurement Act 2023 tendering rules",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "30-day-payment-terms-down-the",
+          "title": "30-day payment terms down the supply chain",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "cyber-essentials-for-some-contracts",
+          "title": "Cyber Essentials for some contracts",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Exclusion from contracts rather than a fine",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: procurement-act-2023-tendering-rules, 30-day-payment-terms-down-the, cyber-essentials-for-some-contracts."
+    },
+    {
+      "id": "premises",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Business premises",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "premises"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "fire-risk-assessment",
+          "title": "Fire risk assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "business-rates-or-relief",
+          "title": "Business rates or relief",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "waste-duty-of-care",
+          "title": "Waste duty of care",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Fire safety fines vary",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: fire-risk-assessment, business-rates-or-relief, waste-duty-of-care."
+    },
+    {
+      "id": "vehicles",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Business vehicles",
+      "module": "Risk and insurance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "vehicles"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "motor-insurance",
+          "title": "Motor insurance",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "mot-and-servicing-records",
+          "title": "MOT and servicing records",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "benefit-in-kind-reporting-for-company",
+          "title": "Benefit-in-kind reporting for company cars",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 250000,
+        "text": "Fines for operating without the right licence or records (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: motor-insurance, mot-and-servicing-records, benefit-in-kind-reporting-for-company."
+    },
+    {
+      "id": "scotland",
+      "version": 1,
+      "pack": "scotland",
+      "factor": "Jurisdiction",
+      "title": "Scotland",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.nations",
+            "op": "has",
+            "value": "scotland"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "scottish-income-tax-rates-in-payroll",
+          "title": "Scottish income tax rates in payroll",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "land-and-buildings-transaction-tax",
+          "title": "Land and Buildings Transaction Tax",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "scottish-business-rates",
+          "title": "Scottish business rates",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Covered by the payroll and tax rules",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: land-and-buildings-transaction-tax, scottish-business-rates."
+    },
+    {
+      "id": "wales",
+      "version": 1,
+      "pack": "wales",
+      "factor": "Jurisdiction",
+      "title": "Wales",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.nations",
+            "op": "has",
+            "value": "wales"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "welsh-income-tax-rates-in-payroll",
+          "title": "Welsh income tax rates in payroll",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "land-transaction-tax",
+          "title": "Land Transaction Tax",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "welsh-business-rates",
+          "title": "Welsh business rates",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Covered by the payroll and tax rules",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: land-transaction-tax, welsh-business-rates."
+    },
+    {
+      "id": "northern-ireland",
+      "version": 1,
+      "pack": "northern-ireland",
+      "factor": "Jurisdiction",
+      "title": "Northern Ireland",
+      "module": "Tax and HMRC",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.nations",
+            "op": "has",
+            "value": "northernIreland"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "northern-ireland-employment-law",
+          "title": "Northern Ireland employment law",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "windsor-framework-vat-and-customs-on",
+          "title": "Windsor Framework VAT and customs on goods",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Covered by the payroll and tax rules",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: northern-ireland-employment-law, windsor-framework-vat-and-customs-on."
+    },
+    {
+      "id": "eu-sales",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Jurisdiction",
+      "title": "Selling to EU consumers",
+      "module": "Tax and HMRC",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "euSales"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "eu-vat-one-stop-shop-or",
+          "title": "EU VAT One Stop Shop or local registration",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "customs-and-import-vat",
+          "title": "Customs and import VAT",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 100000,
+        "text": "EU VAT penalties and interest (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: customs-and-import-vat."
+    },
+    {
+      "id": "staff-abroad",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Jurisdiction",
+      "title": "Staff or entities abroad",
+      "module": "Expert referral",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "staffAbroad"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "foreign-payroll-and-employment-law",
+          "title": "Foreign payroll and employment law",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "permanent-establishment-and-transfer-pricing-review",
+          "title": "Permanent establishment and transfer pricing review",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Overseas payroll, tax and permanent establishment exposure (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: foreign-payroll-and-employment-law, permanent-establishment-and-transfer-pricing-review."
+    },
+    {
+      "id": "sector-construction",
+      "version": 1,
+      "pack": "construction",
+      "factor": "Sector",
+      "title": "Construction",
+      "module": "Sector compliance",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "construction"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "construction-industry-scheme-verify-subcontractors-monthly",
+          "title": "Construction Industry Scheme: verify subcontractors, monthly returns",
+          "recurrence": {
+            "every": "taxMonth"
+          },
+          "deadline": {
+            "anchor": "taxMonthEnd",
+            "offset": {
+              "days": 14
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "gas-safe-and-trade-registrations",
+          "title": "Gas Safe and trade registrations",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "waste-carrier-registration",
+          "title": "Waste carrier registration",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.gov.uk/what-you-must-do-as-a-cis-contractor",
+      "verified": true,
+      "penalty": {
+        "amountPence": 300000,
+        "text": "Late CIS returns £100 rising to £3,000; CDM enforcement",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: gas-safe-and-trade-registrations, waste-carrier-registration."
+    },
+    {
+      "id": "sector-hospitality",
+      "version": 1,
+      "pack": "hospitality",
+      "factor": "Sector",
+      "title": "Food and hospitality",
+      "module": "Sector compliance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "hospitality"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "food-business-registration-28-days-before",
+          "title": "Food business registration 28 days before trading",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -28
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "premises-and-alcohol-licences",
+          "title": "Premises and alcohol licences",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "allergen-information",
+          "title": "Allergen information",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Food hygiene and licensing enforcement (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: premises-and-alcohol-licences, allergen-information."
+    },
+    {
+      "id": "sector-care",
+      "version": 1,
+      "pack": "care",
+      "factor": "Sector",
+      "title": "Care and health",
+      "module": "Sector compliance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "care"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "care-quality-commission-registration",
+          "title": "Care Quality Commission registration",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "enhanced-dbs-checks",
+          "title": "Enhanced DBS checks",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "CQC fixed penalties and prosecution (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: care-quality-commission-registration, enhanced-dbs-checks."
+    },
+    {
+      "id": "sector-financial",
+      "version": 1,
+      "pack": "financial",
+      "factor": "Sector",
+      "title": "Financial services",
+      "module": "Sector compliance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "financial"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "financial-conduct-authority-authorisation",
+          "title": "Financial Conduct Authority authorisation",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "anti-money-laundering-supervision",
+          "title": "Anti-money-laundering supervision",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "text": "FCA enforcement; unlimited, not counted in the business case",
+        "basis": "unlimited"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: financial-conduct-authority-authorisation, anti-money-laundering-supervision."
+    },
+    {
+      "id": "sector-childcare",
+      "version": 1,
+      "pack": "childcare",
+      "factor": "Sector",
+      "title": "Childcare and education",
+      "module": "Sector compliance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "childcare"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "ofsted-registration",
+          "title": "Ofsted registration",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "enhanced-dbs-checks",
+          "title": "Enhanced DBS checks",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Ofsted enforcement (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: ofsted-registration, enhanced-dbs-checks."
+    },
+    {
+      "id": "sector-security",
+      "version": 1,
+      "pack": "security",
+      "factor": "Sector",
+      "title": "Security",
+      "module": "Sector compliance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "security"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "security-industry-authority-licences-for-staff",
+          "title": "Security Industry Authority licences for staff",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Using unlicensed staff: fine up to £5,000 and prison",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: security-industry-authority-licences-for-staff."
+    },
+    {
+      "id": "right-to-work",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Event",
+      "title": "Right-to-work checks",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "event",
+      "obligations": [
+        {
+          "id": "check-documents",
+          "title": "Check and copy right-to-work documents before work starts",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": -1
+            },
+            "payloadField": "payload.startDate"
+          }
+        },
+        {
+          "id": "keep-records",
+          "title": "Keep records for the employment plus two years",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {},
+            "payloadField": "payload.startDate"
+          }
+        }
+      ],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2006/13/section/15",
+      "verified": true,
+      "penalty": {
+        "amountPence": 4500000,
+        "text": "Up to £45,000 per illegal worker, £60,000 for a repeat breach",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: check-and-copy-documents-before-work, keep-records-for-the-job-plus. Secondary source: https://lewissilkin.com/en/insights/illegal-working-civil-penalties-due-to-triple-from-13-february-2024 Event rule in v0.3: fires for each new starter.",
+      "event": {
+        "type": "employeeStarting"
+      }
+    },
+    {
+      "id": "mtd-itsa-2028",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Making Tax Digital for Income Tax (2028 wave)",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "announced",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "eq",
+            "value": "soleTrader"
+          },
+          {
+            "field": "derived.mtdQualifyingIncome",
+            "op": "gt",
+            "value": 2000000
+          },
+          {
+            "field": "derived.mtdQualifyingIncome",
+            "op": "lt",
+            "value": 3000100
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "quarterly-updates-from-april-2028",
+          "title": "Quarterly updates from April 2028",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1,
+              "days": 2
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2028-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "Penalty points; £200 at the threshold, plus late payment penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06"
+    },
+    {
+      "id": "mtd-landlords",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "Making Tax Digital for landlords",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "propertyIncome"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "property-income-counts-toward-the-making",
+          "title": "Property income counts toward the Making Tax Digital threshold",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "quarterly-updates-for-property-income",
+          "title": "Quarterly updates for property income",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1,
+              "days": 2
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 20000,
+        "text": "Penalty points; £200 at the threshold, plus late payment penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "off-payroll",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Off-payroll working (IR35) status decisions",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "contractors"
+          },
+          {
+            "field": "derived.companySize",
+            "op": "sizeAtLeast",
+            "value": "medium"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "sizeBasis": "entity",
+      "obligations": [
+        {
+          "id": "decide-each-contractor-s-employment-status",
+          "title": "Decide each contractor's employment status",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "issue-status-determination-statements",
+          "title": "Issue status determination statements",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "handle-disputes-within-45-days",
+          "title": "Handle disputes within 45 days",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 45
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [
+        {
+          "id": "hand-back-status",
+          "title": "Tell contractors that status decisions pass back to them",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          }
+        }
+      ],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "sourceUrl": "https://www.legislation.gov.uk/ukpga/2003/1/part/2/chapter/10",
+      "verified": true,
+      "penalty": {
+        "amountPence": 2000000,
+        "text": "Liability for the contractor's PAYE and National Insurance if status is wrong (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: decide-each-contractor-s-employment-status, issue-status-determination-statements. Secondary source: https://www.mishcon.com/news/increase-in-small-company-thresholds-will-take-more-contractors-outside-scope-of-off-payroll-working-rules"
+    },
+    {
+      "id": "benefits-in-kind",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Benefits in kind",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "benefits"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "report-benefits-on-p11d-or-payroll",
+          "title": "Report benefits on P11D or payroll them",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "07-06"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "class-1a-national-insurance",
+          "title": "Class 1A National Insurance",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "07-22",
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 30000,
+        "text": "£100 per 50 employees per month late, plus penalties for errors",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "share-schemes",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Employee share schemes",
+      "module": "Tax and HMRC",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "shareOptions"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-the-scheme-with-hmrc",
+          "title": "Register the scheme with HMRC",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "annual-return-by-6-july",
+          "title": "Annual return by 6 July",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "07-06"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 70000,
+        "text": "£100 late, £300 at 3 months, £300 at 6 months, then daily; tax reliefs can be lost",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: register-the-scheme-with-hmrc."
+    },
+    {
+      "id": "rnd-relief",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "R&D tax relief",
+      "module": "Tax and HMRC",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "rnd"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "claim-notification-for-first-claims",
+          "title": "Claim notification for first claims",
+          "recurrence": {
+            "every": "accountingPeriod"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 6
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "additional-information-form-with-the-claim",
+          "title": "Additional information form with the claim",
+          "recurrence": {
+            "every": "accountingPeriod"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Missed relief rather than a penalty",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "plastic-packaging-tax",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Plastic packaging tax",
+      "module": "Tax and HMRC",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "plasticPackaging"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-if-10-tonnes-or-more",
+          "title": "Register if 10 tonnes or more in 12 months",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "quarterly-returns",
+          "title": "Quarterly returns",
+          "recurrence": {
+            "every": "quarterly"
+          },
+          "deadline": {
+            "anchor": "periodEnd",
+            "offset": {
+              "months": 1
+            },
+            "adjust": "previousWorkingDay"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 250000,
+        "text": "Tax due plus penalties for failing to register (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: register-if-10-tonnes-or-more."
+    },
+    {
+      "id": "customs",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Importing and exporting goods",
+      "module": "Tax and HMRC",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "importsExports"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "eori-number",
+          "title": "EORI number",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "customs-declarations-and-import-vat",
+          "title": "Customs declarations and import VAT",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 250000,
+        "text": "Delays, seizure and penalties (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: customs-declarations-and-import-vat."
+    },
+    {
+      "id": "sponsor-licence",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Sponsor licence for overseas workers",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "overseasHires"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "hold-a-sponsor-licence-before-hiring",
+          "title": "Hold a sponsor licence before hiring",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "report-changes-and-keep-records",
+          "title": "Report changes and keep records",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "pay-the-immigration-skills-charge",
+          "title": "Pay the immigration skills charge",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 4500000,
+        "text": "Licence downgrade or revocation; illegal working penalties",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: report-changes-and-keep-records, pay-the-immigration-skills-charge."
+    },
+    {
+      "id": "young-workers",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Young workers",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "staffUnder18"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "working-time-limits-and-breaks",
+          "title": "Working-time limits and breaks",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "specific-risk-assessment",
+          "title": "Specific risk assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "HSE enforcement (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: working-time-limits-and-breaks, specific-risk-assessment."
+    },
+    {
+      "id": "tips",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Tips and service charges",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "tips"
+          },
+          {
+            "field": "fact.sectors",
+            "op": "has",
+            "value": "hospitality"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "pass-all-tips-to-workers",
+          "title": "Pass all tips to workers",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "written-tipping-policy",
+          "title": "Written tipping policy",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "keep-records-for-three-years",
+          "title": "Keep records for three years",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Tribunal can award up to £5,000 per worker",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: pass-all-tips-to-workers, written-tipping-policy, keep-records-for-three-years."
+    },
+    {
+      "id": "dbs-checks",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Sector",
+      "title": "DBS checks for regulated roles",
+      "module": "Payroll and HR",
+      "phase": 2,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "any": [
+              {
+                "field": "fact.sectors",
+                "op": "has",
+                "value": "care"
+              },
+              {
+                "field": "fact.sectors",
+                "op": "has",
+                "value": "childcare"
+              },
+              {
+                "field": "fact.sectors",
+                "op": "has",
+                "value": "financial"
+              }
+            ]
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "right-level-of-dbs-check-before",
+          "title": "Right level of DBS check before start",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "Criminal offence to employ a barred person in a regulated role (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: right-level-of-dbs-check-before."
+    },
+    {
+      "id": "asbestos",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Asbestos management",
+      "module": "Health and safety",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "oldPremises"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "asbestos-survey-and-register",
+          "title": "Asbestos survey and register",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "management-plan",
+          "title": "Management plan",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "HSE prosecution (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: asbestos-survey-and-register, management-plan."
+    },
+    {
+      "id": "legionella",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Legionella risk",
+      "module": "Health and safety",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "premises"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "water-system-risk-assessment",
+          "title": "Water system risk assessment",
+          "recurrence": {
+            "every": "annual",
+            "interval": 2
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 24
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "HSE prosecution (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date Default deadline (trigger date + 30 days), to confirm: water-system-risk-assessment"
+    },
+    {
+      "id": "commercial-epc",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Commercial energy performance",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "letsCommercial"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "valid-epc",
+          "title": "Valid EPC",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "meet-minimum-energy-standards-to-let",
+          "title": "Meet minimum energy standards to let",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "Fines based on rateable value, up to £150,000 (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: valid-epc, meet-minimum-energy-standards-to-let."
+    },
+    {
+      "id": "music-licence",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Music licence",
+      "module": "Premises and environment",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "music"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "themusiclicence-from-ppl-prs",
+          "title": "TheMusicLicence from PPL PRS",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 100000,
+        "text": "Licence fees plus legal costs (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "pci-dss",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Card payment security",
+      "module": "Data protection",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "agent",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "cardPayments"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "pci-dss-self-assessment-with-the",
+          "title": "PCI DSS self-assessment with the card provider",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "months": 12
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 250000,
+        "text": "Card acquirer non-compliance fees and breach costs (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "high-value-dealer",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "High-value dealer supervision",
+      "module": "Sector compliance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "cash10K"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "register-with-hmrc-for-anti-money",
+          "title": "Register with HMRC for anti-money-laundering supervision",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {}
+          },
+          "remindDaysBefore": [
+            7,
+            1
+          ]
+        },
+        {
+          "id": "customer-due-diligence",
+          "title": "Customer due diligence",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "HMRC money laundering penalties; trading unregistered is an offence (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: customer-due-diligence."
+    },
+    {
+      "id": "consumer-credit",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Consumer credit",
+      "module": "Sector compliance",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "consumerCredit"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "fca-authorisation-or-use-an-authorised",
+          "title": "FCA authorisation or use an authorised provider",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "Unauthorised lending is an offence and agreements may be unenforceable (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: fca-authorisation-or-use-an-authorised."
+    },
+    {
+      "id": "charity-cic",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Legal form",
+      "title": "Charity or community interest company",
+      "module": "Governance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "in",
+            "value": [
+              "charity",
+              "cic"
+            ]
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "charity-commission-annual-return-or-cic",
+          "title": "Charity Commission annual return, or CIC community interest report",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 75000,
+        "text": "Late CIC report £150 to £1,500; Charity Commission action",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "llp-partnership",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Legal form",
+      "title": "LLP or partnership filings",
+      "module": "Governance",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "signoff",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "fact.legalForm",
+            "op": "in",
+            "value": [
+              "llp",
+              "partnership"
+            ]
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "partnership-tax-return",
+          "title": "Partnership tax return",
+          "recurrence": {
+            "every": "annual"
+          },
+          "deadline": {
+            "anchor": "fixed",
+            "offset": {},
+            "fixed": "01-31"
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "llp-accounts-and-confirmation-statement",
+          "title": "LLP accounts and confirmation statement",
+          "recurrence": {
+            "every": "financialYear"
+          },
+          "deadline": {
+            "anchor": "financialYearEnd",
+            "offset": {
+              "months": 9
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 75000,
+        "text": "Late LLP accounts £150 to £1,500; £100 per partner for a late partnership return",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date."
+    },
+    {
+      "id": "special-category-data",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Activity",
+      "title": "Special category data",
+      "module": "Data protection",
+      "phase": 3,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "specialData"
+          },
+          {
+            "any": [
+              {
+                "field": "fact.sectors",
+                "op": "has",
+                "value": "care"
+              },
+              {
+                "field": "fact.sectors",
+                "op": "has",
+                "value": "childcare"
+              }
+            ]
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "extra-legal-condition-and-policy-document",
+          "title": "Extra legal condition and policy document",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "data-protection-impact-assessment",
+          "title": "Data protection impact assessment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 1000000,
+        "text": "ICO enforcement for unlawful processing (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: extra-legal-condition-and-policy-document, data-protection-impact-assessment."
+    },
+    {
+      "id": "eu-customers-data",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Jurisdiction",
+      "title": "EU customers and AI",
+      "module": "Data protection",
+      "phase": 4,
+      "status": "inForce",
+      "mode": "human",
+      "trigger": "threshold",
+      "when": {
+        "any": [
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "euCustomers"
+          },
+          {
+            "field": "fact.activities",
+            "op": "has",
+            "value": "aiSystems"
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "eu-representative-under-eu-gdpr-if",
+          "title": "EU representative under EU GDPR if no EU establishment",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        },
+        {
+          "id": "eu-ai-act-checks-for-ai",
+          "title": "EU AI Act checks for AI used in the EU",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 500000,
+        "text": "EU regulator enforcement (estimate)",
+        "basis": "estimate"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: eu-representative-under-eu-gdpr-if, eu-ai-act-checks-for-ai."
+    },
+    {
+      "id": "vat-deregistration",
+      "version": 1,
+      "pack": "gb-core",
+      "factor": "Revenue",
+      "title": "VAT deregistration option",
+      "module": "Tax and HMRC",
+      "phase": 1,
+      "status": "inForce",
+      "mode": "interplay",
+      "trigger": "threshold",
+      "when": {
+        "all": [
+          {
+            "field": "derived.turnoverFY",
+            "op": "lt",
+            "value": 8800000
+          },
+          {
+            "field": "fact.vatRegistered",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "exitAfter": 0,
+      "obligations": [
+        {
+          "id": "option-to-deregister-below-88-000",
+          "title": "Option to deregister below £88,000",
+          "recurrence": {
+            "every": "once"
+          },
+          "deadline": {
+            "anchor": "triggerDate",
+            "offset": {
+              "days": 30
+            }
+          },
+          "remindDaysBefore": [
+            30,
+            14,
+            3
+          ]
+        }
+      ],
+      "onExit": [],
+      "effectiveFrom": "2026-04-06",
+      "effectiveTo": null,
+      "verified": false,
+      "penalty": {
+        "amountPence": 0,
+        "text": "Optional; a savings opportunity rather than a penalty",
+        "basis": "fixed"
+      },
+      "reviewBy": "2027-04-06",
+      "note": "effectiveFrom 2026-04-06 is the rule-file baseline, not the legal start date. Default deadline (trigger date + 30 days), to confirm: option-to-deregister-below-88-000."
+    }
+  ]
+}
