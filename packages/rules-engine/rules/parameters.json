@@ -24,6 +24,12 @@
     },
     {
       "key": "vat",
+      "effectiveFrom": "2017-04-01",
+      "sourceUrl": "https://www.gov.uk/government/publications/vat-registration-and-deregistration-thresholds-from-1-april-2024",
+      "value": { "registration": 8500000, "deregistration": 8300000 }
+    },
+    {
+      "key": "vat",
       "effectiveFrom": "2024-04-01",
       "sourceUrl": "https://www.gov.uk/register-for-vat",
       "value": { "registration": 9000000, "deregistration": 8800000 }
