@@ -21,7 +21,7 @@ review the judgement calls.
 | `apps/web` | The demo web app: client list, obligations calendar, approvals inbox, document upload, money owed, track record, expert queue and audit trail, plus a JSON API |
 | `packages/synthetic` | Three fake clients with April 2022 to October 2026 histories: ledger, bank feed, payroll, filings, letters, supplier documents and planted edge cases for red-teaming |
 
-Still to come: database persistence for the web app, sign-in, the Smartsheet sync, and the agents.
+Still to come: database persistence for the web app, the Smartsheet sync, and the agents.
 
 ## Principles the code holds to
 
@@ -43,11 +43,13 @@ pnpm typecheck
 pnpm validate-rules  # schema and version-overlap checks on the rule file
 pnpm --filter @geartrain/synthetic generate   # writes the fake clients to data/synthetic (gitignored)
 pnpm --filter @geartrain/worker calendar 2026-11-03   # prints each fake client's obligations calendar
-DEMO_DATE=2026-11-03 pnpm start                        # the demo web app on http://localhost:3000
+DEMO_DATE=2026-11-03 pnpm start                        # the demo web app on http://localhost:3000 (needs the sign-in secrets)
 ```
 
-On Replit, import the GitHub repo and press Run: `.replit` installs and starts the demo. The demo has no
-sign-in and holds everything in memory, so it must only ever show fake clients.
+On Replit, import the GitHub repo and press Run: `.replit` installs and starts the demo. Sign-in is
+invite-only: set the `SESSION_SECRET` and `GEARTRAIN_USERS` secrets first (see
+[apps/web/README.md](apps/web/README.md)). The demo holds everything in memory, so it
+must only ever show fake clients.
 
 ### The fake clients
 

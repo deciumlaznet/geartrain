@@ -1,6 +1,7 @@
 /** @jsxImportSource hono/jsx */
 import type { Child } from "hono/jsx";
 import type { CalendarTask } from "@geartrain/worker";
+import type { User } from "./auth.ts";
 import type { Approval, AuditEvent, ClientState, DemoState } from "./state.ts";
 
 export const gbp = (pence: number) =>
@@ -35,6 +36,8 @@ button.secondary{background:transparent;color:var(--accent)}
 pre{white-space:pre-wrap;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
 .flash{padding:10px 14px;border-radius:8px;margin:12px 0;background:var(--chip)}.flash.err{background:var(--warnbg);color:var(--warn)}
 .scroll{overflow-x:auto}
+form.who{display:flex;gap:8px;align-items:center;font-size:13px}form.who button{padding:2px 10px}
+.login{max-width:380px;margin:64px auto}.login label{display:block;margin:12px 0 4px;font-size:14px}.login input{width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}.login button{margin-top:16px;width:100%;padding:10px}
 `;
 
 const Cog = () => (
@@ -46,7 +49,7 @@ const Cog = () => (
   </svg>
 );
 
-export const Layout = (p: { title: string; today: string; children: Child }) => (
+export const Layout = (p: { title: string; today: string; user?: User | undefined; children: Child }) => (
   <html lang="en-GB">
     <head>
       <meta charset="utf-8" />
@@ -60,8 +63,14 @@ export const Layout = (p: { title: string; today: string; children: Child }) => 
           <a class="brand" href="/">
             <Cog /> Geartrain
           </a>
-          <a href="/audit">Audit trail</a>
+          {p.user?.role === "staff" ? <a href="/audit">Audit trail</a> : null}
           <span class="demo">Demo environment · fake clients · today is {longDate(p.today)}</span>
+          {p.user ? (
+            <form method="post" action="/logout" class="who">
+              <span>{p.user.name}</span>
+              <button class="secondary">Sign out</button>
+            </form>
+          ) : null}
         </div>
       </header>
       <main class="wrap">{p.children}</main>
@@ -86,8 +95,25 @@ export function clientSummary(c: ClientState, approvals: Approval[]) {
   };
 }
 
-export const Home = (p: { state: DemoState }) => (
-  <Layout title="Clients" today={p.state.today}>
+export const LoginPage = (p: { today: string; err?: string | undefined }) => (
+  <Layout title="Sign in" today={p.today}>
+    <div class="card login">
+      <h1 style="margin-top:0">Sign in</h1>
+      <p class="sub">Geartrain accounts are by invitation.</p>
+      <Flash err={p.err} />
+      <form method="post" action="/login">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <button>Sign in</button>
+      </form>
+    </div>
+  </Layout>
+);
+
+export const Home = (p: { state: DemoState; user: User }) => (
+  <Layout title="Clients" today={p.state.today} user={p.user}>
     <h1>Clients</h1>
     <p class="sub">Each client's obligations calendar, the decisions waiting for them, and their books.</p>
     <div class="grid">
@@ -135,15 +161,15 @@ const TABS = [
   ["expert", "Expert queue"],
 ] as const;
 
-export const ClientPage = (p: { state: DemoState; c: ClientState; tab: string; children: Child; msg?: string | undefined; err?: string | undefined }) => {
+export const ClientPage = (p: { state: DemoState; user: User; c: ClientState; tab: string; children: Child; msg?: string | undefined; err?: string | undefined }) => {
   const key = p.c.data.profile.key;
   const pending = p.state.approvals.filter((a) => a.clientKey === key && a.status === "pending").length;
   return (
-    <Layout title={p.c.data.profile.clientName} today={p.state.today}>
+    <Layout title={p.c.data.profile.clientName} today={p.state.today} user={p.user}>
       <h1>{p.c.data.profile.clientName}</h1>
       <p class="sub">{p.c.data.profile.entity.name}</p>
       <nav class="tabs">
-        {TABS.map(([path, label]) => (
+        {TABS.filter(([path]) => path !== "expert" || p.user.role === "staff").map(([path, label]) => (
           <a class={p.tab === path ? "on" : ""} href={`/clients/${key}${path ? `/${path}` : ""}`}>
             {label}
             {path === "approvals" && pending ? ` (${pending})` : ""}

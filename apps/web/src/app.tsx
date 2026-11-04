@@ -2,29 +2,106 @@
 // Routes for the demo web app. Pages are server-rendered; /api returns the same
 // data as JSON for the Smartsheet sync and the agents.
 
-import { Hono } from "hono";
+import { Hono, type Context, type MiddlewareHandler } from "hono";
+import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
+import { csrf } from "hono/csrf";
+import { secureHeaders } from "hono/secure-headers";
 import { NotSupportedError } from "@geartrain/connectors";
+import { canSeeClient, LoginThrottle, SESSION_COOKIE, SESSION_HOURS, type User, type UserDirectory } from "./auth.ts";
 import { decide, DecisionError, type DemoState } from "./state.ts";
-import { ApprovalCard, AuditTable, ClientPage, gbp, Home, Layout, longDate, TaskTable } from "./views.tsx";
+import { ApprovalCard, AuditTable, ClientPage, gbp, Home, Layout, LoginPage, longDate, TaskTable } from "./views.tsx";
 
-/** Until sign-in exists, every action is recorded against this name. */
-const DEMO_ACTOR = "Demo user";
 const MAX_UPLOAD_BYTES = 1_000_000;
 const DOC_KINDS = ["supplierInvoice", "receipt", "letter", "bankStatement", "contract"] as const;
 
-export function createApp(state: DemoState) {
-  const app = new Hono();
-  const client = (key: string) => state.clients.get(key);
-  const notFound = () => new Response("Not found", { status: 404 });
+export interface AuthOptions {
+  users: UserDirectory;
+  /** At least 32 characters; from the SESSION_SECRET secret. */
+  sessionSecret: string;
+  /** Send the cookie over HTTPS only. On for anything but local development. */
+  secureCookies: boolean;
+  throttle?: LoginThrottle;
+}
 
-  app.get("/", (c) => c.html(<Home state={state} />));
+type Env = { Variables: { user: User } };
+
+export function createApp(state: DemoState, auth: AuthOptions) {
+  if (auth.sessionSecret.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters");
+  const app = new Hono<Env>();
+  const throttle = auth.throttle ?? new LoginThrottle();
+  const notFound = () => new Response("Not found", { status: 404 });
+  const actor = (c: Context<Env>) => `${c.get("user").name} <${c.get("user").email}>`;
+  /** A client the signed-in user may see; anything else is a 404, so other clients' names never leak. */
+  const clientFor = (c: Context<Env>, key: string) => (canSeeClient(c.get("user"), key) ? state.clients.get(key) : undefined);
+  const visibleState = (user: User): DemoState => ({
+    ...state,
+    clients: new Map([...state.clients].filter(([k]) => canSeeClient(user, k))),
+    approvals: state.approvals.filter((a) => canSeeClient(user, a.clientKey)),
+  });
+
+  app.use("*", secureHeaders());
+  app.use("*", csrf());
+
+  // ---- Sign-in -------------------------------------------------------------
+
+  app.get("/login", (c) => c.html(<LoginPage today={state.today} err={c.req.query("err")} />));
+
+  app.post("/login", async (c) => {
+    const body = await c.req.parseBody();
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body.password === "string" ? body.password : "";
+    const fail = (msg: string) => c.redirect(`/login?err=${encodeURIComponent(msg)}`, 303);
+    if (throttle.locked(email)) return fail("Too many attempts. Try again in 15 minutes.");
+    const user = email && password ? auth.users.authenticate(email, password) : undefined;
+    if (!user) {
+      throttle.fail(email);
+      state.audit.push({ at: state.now(), actor: email || "(blank)", clientKey: "-", action: "signin.failed", refs: [] });
+      return fail("That email and password don't match an account.");
+    }
+    throttle.clear(email);
+    const expires = Date.now() + SESSION_HOURS * 3_600_000;
+    await setSignedCookie(c, SESSION_COOKIE, `${user.email}|${expires}`, auth.sessionSecret, {
+      httpOnly: true,
+      secure: auth.secureCookies,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: SESSION_HOURS * 3600,
+    });
+    state.audit.push({ at: state.now(), actor: `${user.name} <${user.email}>`, clientKey: "-", action: "signin", refs: [] });
+    return c.redirect("/", 303);
+  });
+
+  app.post("/logout", (c) => {
+    deleteCookie(c, SESSION_COOKIE, { path: "/", secure: auth.secureCookies });
+    return c.redirect("/login", 303);
+  });
+
+  const requireUser: MiddlewareHandler<Env> = async (c, next) => {
+    const raw = await getSignedCookie(c, auth.sessionSecret, SESSION_COOKIE);
+    const [email, expires] = typeof raw === "string" ? raw.split("|") : [];
+    const user = email && Number(expires) > Date.now() ? auth.users.get(email) : undefined;
+    if (!user) {
+      if (c.req.path.startsWith("/api/")) return c.json({ error: "Sign in required" }, 401);
+      return c.redirect("/login", 303);
+    }
+    c.set("user", user);
+    await next();
+  };
+  app.use("*", requireUser);
+
+  const staffOnly: MiddlewareHandler<Env> = async (c, next) => {
+    if (c.get("user").role !== "staff") return notFound();
+    await next();
+  };
+
+  app.get("/", (c) => c.html(<Home state={visibleState(c.get("user"))} user={c.get("user")} />));
 
   app.get("/clients/:key", (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const open = cs.calendar.tasks.filter((t) => t.status === "open" && t.audience === "client");
     return c.html(
-      <ClientPage state={state} c={cs} tab="">
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="">
         <h2>Overdue</h2>
         <TaskTable tasks={open.filter((t) => t.overdue)} />
         <h2>Coming up</h2>
@@ -34,13 +111,13 @@ export function createApp(state: DemoState) {
   });
 
   app.get("/clients/:key/approvals", (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const mine = state.approvals.filter((a) => a.clientKey === cs.data.profile.key);
     const pending = mine.filter((a) => a.status === "pending");
     const decided = mine.filter((a) => a.status !== "pending");
     return c.html(
-      <ClientPage state={state} c={cs} tab="approvals" msg={c.req.query("msg")} err={c.req.query("err")}>
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="approvals" msg={c.req.query("msg")} err={c.req.query("err")}>
         <p class="sub">Anything that moves money, reaches someone new or changes bank details waits here for a person.</p>
         <h2>Waiting for you</h2>
         {pending.length ? pending.map((a) => <ApprovalCard a={a} />) : <p class="sub">Nothing to approve.</p>}
@@ -58,13 +135,13 @@ export function createApp(state: DemoState) {
 
   app.post("/approvals/:id", async (c) => {
     const a = state.approvals.find((x) => x.id === c.req.param("id"));
-    if (!a) return notFound();
+    if (!a || !canSeeClient(c.get("user"), a.clientKey)) return notFound();
     const body = await c.req.parseBody();
     const decision = body.decision === "approved" ? "approved" : body.decision === "rejected" ? "rejected" : undefined;
     const back = `/clients/${a.clientKey}/approvals`;
     if (!decision) return c.redirect(`${back}?err=${encodeURIComponent("Choose approve or reject")}`, 303);
     try {
-      decide(state, a.id, decision, DEMO_ACTOR, typeof body.note === "string" ? body.note : undefined);
+      decide(state, a.id, decision, actor(c), typeof body.note === "string" ? body.note : undefined);
       return c.redirect(`${back}?msg=${encodeURIComponent(`${decision === "approved" ? "Approved" : "Rejected"}: ${a.title}`)}`, 303);
     } catch (e) {
       if (e instanceof DecisionError) return c.redirect(`${back}?err=${encodeURIComponent(e.message)}`, 303);
@@ -73,13 +150,13 @@ export function createApp(state: DemoState) {
   });
 
   app.get("/clients/:key/documents", async (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const uploaded = state.audit.filter((e) => e.clientKey === cs.data.profile.key && e.action === "document.uploaded").flatMap((e) => e.refs);
     const docs = await Promise.all(uploaded.map((id) => cs.xero.getDocument(id)));
     const recent = [...cs.data.documents].sort((a, b) => (a.receivedOn < b.receivedOn ? 1 : -1)).slice(0, 25);
     return c.html(
-      <ClientPage state={state} c={cs} tab="documents" msg={c.req.query("msg")} err={c.req.query("err")}>
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="documents" msg={c.req.query("msg")} err={c.req.query("err")}>
         <div class="card">
           <h3>Upload a document</h3>
           <p class="sub">Supplier invoices, receipts and letters go to the agent for processing. The demo takes plain-text files up to 1 MB.</p>
@@ -106,7 +183,7 @@ export function createApp(state: DemoState) {
   });
 
   app.post("/clients/:key/documents", async (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const back = `/clients/${cs.data.profile.key}/documents`;
     const body = await c.req.parseBody();
@@ -122,7 +199,7 @@ export function createApp(state: DemoState) {
         receivedOn: state.today,
         kind,
       });
-      state.audit.push({ at: state.now(), actor: DEMO_ACTOR, clientKey: cs.data.profile.key, action: "document.uploaded", refs: [doc.id], detail: doc.fileName });
+      state.audit.push({ at: state.now(), actor: actor(c), clientKey: cs.data.profile.key, action: "document.uploaded", refs: [doc.id], detail: doc.fileName });
       return c.redirect(`${back}?msg=${encodeURIComponent(`Uploaded ${doc.fileName}. The agent will pick it up.`)}`, 303);
     } catch (e) {
       if (e instanceof NotSupportedError) return c.redirect(`${back}?err=${encodeURIComponent("The demo takes plain-text files only")}`, 303);
@@ -131,11 +208,11 @@ export function createApp(state: DemoState) {
   });
 
   app.get("/clients/:key/documents/:id", async (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     const doc = cs ? await cs.xero.getDocument(c.req.param("id")) : undefined;
     if (!cs || !doc) return notFound();
     return c.html(
-      <ClientPage state={state} c={cs} tab="documents">
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="documents">
         <h2>{doc.fileName}</h2>
         <p class="sub">
           {doc.kind} · received {longDate(doc.receivedOn)}
@@ -146,7 +223,7 @@ export function createApp(state: DemoState) {
   });
 
   app.get("/clients/:key/ledger", async (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const contacts = new Map((await cs.xero.listContacts()).map((x) => [x.id, x.name]));
     const open = (await cs.xero.listInvoices({ status: ["authorised", "partlyPaid"] })).sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1));
@@ -154,7 +231,7 @@ export function createApp(state: DemoState) {
     const days = (d: string) => Math.round((Date.parse(state.today) - Date.parse(d)) / 86_400_000);
     const owed = (i: (typeof open)[number]) => i.totalPence - i.payments.reduce((s, p) => s + p.amountPence, 0);
     return c.html(
-      <ClientPage state={state} c={cs} tab="ledger">
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="ledger">
         <h2>Unpaid invoices ({gbp(open.reduce((s, i) => s + owed(i), 0))})</h2>
         <div class="scroll">
           <table>
@@ -202,11 +279,11 @@ export function createApp(state: DemoState) {
   });
 
   app.get("/clients/:key/history", (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const filings = cs.data.filings.filter((f) => f.submittedOn && f.kind !== "payeMonthly").sort((a, b) => (a.submittedOn! < b.submittedOn! ? 1 : -1));
     return c.html(
-      <ClientPage state={state} c={cs} tab="history">
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="history">
         <h2>Filed returns and accounts</h2>
         <div class="scroll">
           <table>
@@ -240,21 +317,21 @@ export function createApp(state: DemoState) {
     );
   });
 
-  app.get("/clients/:key/expert", (c) => {
-    const cs = client(c.req.param("key"));
+  app.get("/clients/:key/expert", staffOnly, (c) => {
+    const cs = clientFor(c, c.req.param("key"));
     if (!cs) return notFound();
     const internal = cs.calendar.tasks.filter((t) => t.audience === "internal" && t.status === "open");
     return c.html(
-      <ClientPage state={state} c={cs} tab="expert">
+      <ClientPage state={state} user={c.get("user")} c={cs} tab="expert">
         <p class="sub">Internal only. Rules not yet verified by an expert raise review tasks here instead of client work; missing facts are asked for here.</p>
         <TaskTable tasks={internal} />
       </ClientPage>,
     );
   });
 
-  app.get("/audit", (c) =>
+  app.get("/audit", staffOnly, (c) =>
     c.html(
-      <Layout title="Audit trail" today={state.today}>
+      <Layout title="Audit trail" today={state.today} user={c.get("user")}>
         <h1>Audit trail</h1>
         <p class="sub">Every decision and upload, in order. Append-only.</p>
         <AuditTable events={state.audit} />
@@ -263,12 +340,15 @@ export function createApp(state: DemoState) {
   );
 
   // JSON for the Smartsheet sync and the agents.
-  app.get("/api/clients", (c) => c.json([...state.clients.values()].map((x) => ({ key: x.data.profile.key, name: x.data.profile.clientName, legalForm: x.data.profile.entity.legalForm }))));
+  app.get("/api/clients", (c) => c.json([...visibleState(c.get("user")).clients.values()].map((x) => ({ key: x.data.profile.key, name: x.data.profile.clientName, legalForm: x.data.profile.entity.legalForm }))));
   app.get("/api/clients/:key/calendar", (c) => {
-    const cs = client(c.req.param("key"));
+    const cs = clientFor(c, c.req.param("key"));
     return cs ? c.json(cs.calendar.tasks) : notFound();
   });
-  app.get("/api/clients/:key/approvals", (c) => c.json(state.approvals.filter((a) => a.clientKey === c.req.param("key"))));
+  app.get("/api/clients/:key/approvals", (c) => {
+    const cs = clientFor(c, c.req.param("key"));
+    return cs ? c.json(state.approvals.filter((a) => a.clientKey === cs.data.profile.key)) : notFound();
+  });
 
   return app;
 }
