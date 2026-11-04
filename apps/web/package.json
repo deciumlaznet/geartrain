@@ -8,7 +8,8 @@
     "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc -p .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "hash-password": "tsx src/cli/hash-password.ts"
   },
   "dependencies": {
     "@geartrain/connectors": "workspace:*",
