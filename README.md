@@ -18,10 +18,10 @@ review the judgement calls.
 | `packages/db` | Postgres schema (Drizzle), migrations, and row-level security keeping clients apart |
 | `packages/connectors` | Interfaces for the ledger (Xero first), HMRC and Companies House, with in-memory stand-ins that serve the fake clients and keep the real services' limits |
 | `packages/worker` | Builds each client's obligations calendar from the rules engine, HMRC obligations and Companies House dates |
+| `apps/web` | The demo web app: client list, obligations calendar, approvals inbox, document upload, money owed, track record, expert queue and audit trail, plus a JSON API |
 | `packages/synthetic` | Three fake clients with April 2022 to October 2026 histories: ledger, bank feed, payroll, filings, letters, supplier documents and planted edge cases for red-teaming |
 
-Still to come:
-the Smartsheet sync, the Replit web app, and the agents.
+Still to come: database persistence for the web app, sign-in, the Smartsheet sync, and the agents.
 
 ## Principles the code holds to
 
@@ -43,7 +43,11 @@ pnpm typecheck
 pnpm validate-rules  # schema and version-overlap checks on the rule file
 pnpm --filter @geartrain/synthetic generate   # writes the fake clients to data/synthetic (gitignored)
 pnpm --filter @geartrain/worker calendar 2026-11-03   # prints each fake client's obligations calendar
+DEMO_DATE=2026-11-03 pnpm start                        # the demo web app on http://localhost:3000
 ```
+
+On Replit, import the GitHub repo and press Run: `.replit` installs and starts the demo. The demo has no
+sign-in and holds everything in memory, so it must only ever show fake clients.
 
 ### The fake clients
 

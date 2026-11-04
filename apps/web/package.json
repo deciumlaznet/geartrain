@@ -1,0 +1,27 @@
+{
+  "name": "@geartrain/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/app.ts",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@geartrain/connectors": "workspace:*",
+    "@geartrain/rules-engine": "workspace:*",
+    "@geartrain/synthetic": "workspace:*",
+    "@geartrain/worker": "workspace:*",
+    "@hono/node-server": "2.1.4",
+    "hono": "4.13.13",
+    "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
