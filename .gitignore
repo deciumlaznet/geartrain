@@ -4,3 +4,7 @@ dist/
 .env.*
 *.log
 data/
+
+# Replit Agent working notes
+.agents/
+.conversation/
