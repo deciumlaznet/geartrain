@@ -37,7 +37,7 @@ Still to come: database persistence for the web app, the Smartsheet sync, and th
 Needs Node 22 and pnpm 10.
 
 ```sh
-pnpm install
+pnpm install --prod=false   # include dev tools; a plain install is production-only (see .npmrc)
 pnpm test            # unit tests and the 16 acceptance tests from the build spec
 pnpm typecheck
 pnpm validate-rules  # schema and version-overlap checks on the rule file
