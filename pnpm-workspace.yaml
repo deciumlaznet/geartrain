@@ -1,3 +1,7 @@
 packages:
   - "packages/*"
   - "apps/*"
+
+# Replit builds run pnpm without a terminal; never stop to ask before
+# rebuilding node_modules.
+confirmModulesPurge: false
