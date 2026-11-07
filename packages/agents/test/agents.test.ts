@@ -112,3 +112,47 @@ describe("document intake", () => {
     expect(req.tools.every((t) => t.strict === true)).toBe(true);
   });
 });
+
+describe("credit control", () => {
+  const today = "2026-11-03";
+  async function overdue(xero: MockXero) {
+    return (await xero.listInvoices({ status: ["authorised", "partlyPaid"] })).filter((i) => i.dueDate < today);
+  }
+
+  it("lists overdue invoices, drafts a reminder and only proposes sending it", async () => {
+    const { runCreditControl } = await import("../src/index.ts");
+    const xero = new MockXero(ng);
+    const inv = (await overdue(xero))[0]!;
+    const model = new ScriptedModel([
+      [call("list_overdue_invoices", {})],
+      [call("customer_history", { contactId: inv.contactId })],
+      [call("draft_reminder", { invoiceId: inv.id, stage: "firm", subject: `Invoice ${inv.number}`, body: "Our records show this invoice is now overdue. Please arrange payment by return." })],
+      [call("propose_send", { invoiceId: inv.id, reason: "Overdue" })],
+      [say("One reminder drafted.")],
+    ]);
+    const r = await runCreditControl({ model, ledger: xero, clientName: "Northgate", today });
+    const listed = JSON.parse(r.run.actions[0]!.result) as { invoiceId: string; daysLate: number }[];
+    expect(listed.length).toBeGreaterThan(0);
+    expect(listed.every((x) => x.daysLate > 0)).toBe(true);
+    expect(r.drafts).toHaveLength(1);
+    expect(r.drafts[0]!.to).toContain("@");
+    expect(r.run.proposals).toEqual([{ tool: "propose_send", risk: "externalFinancial", input: { invoiceId: inv.id, reason: "Overdue" } }]);
+    expect(xero.writes).toEqual([]);
+  });
+
+  it("refuses a second draft for the same invoice, drops a send proposal with no draft, and never adds interest", async () => {
+    const { runCreditControl } = await import("../src/index.ts");
+    const xero = new MockXero(ng);
+    const [a, b] = await overdue(xero);
+    const body = "This invoice is overdue; please pay it or tell us if there is a problem with it.";
+    const model = new ScriptedModel([
+      [call("draft_reminder", { invoiceId: a!.id, stage: "friendly", subject: "s", body })],
+      [call("draft_reminder", { invoiceId: a!.id, stage: "firm", subject: "s", body }), call("propose_send", { invoiceId: b!.id, reason: "x" }), call("add_late_payment_interest", { invoiceId: a!.id })],
+      [say("Done.")],
+    ]);
+    const r = await runCreditControl({ model, ledger: xero, clientName: "Northgate", today });
+    expect(r.drafts).toHaveLength(1);
+    expect(r.run.actions.map((x) => x.outcome)).toEqual(["ran", "failed", "proposed", "refused"]);
+    expect(r.run.proposals.map((p) => p.tool)).toEqual(["add_late_payment_interest"]);
+  });
+});
