@@ -14,7 +14,7 @@ export type RiskClass = "read" | "reversible" | "externalFinancial" | "blocked";
 export interface Approval {
   id: string;
   clientKey: string;
-  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice";
+  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice" | "reviewDocument";
   title: string;
   detail: string;
   amountPence?: number;
@@ -48,11 +48,22 @@ export interface ClientState {
   calendar: Calendar;
 }
 
+/** What the intake agent did with an uploaded document. */
+export interface AgentNote {
+  documentId: string;
+  clientKey: string;
+  status: "working" | "done" | "failed";
+  summary?: string;
+  draftBillIds: string[];
+  approvalIds: string[];
+}
+
 export interface DemoState {
   today: ISODate;
   clients: Map<string, ClientState>;
   approvals: Approval[];
   audit: AuditEvent[];
+  agentNotes: Map<string, AgentNote>;
   now: () => string;
 }
 
@@ -67,7 +78,7 @@ export async function createDemoState(today: ISODate, now: () => string = () => 
     const calendar = await buildCalendar(data, { rules, params, onboardedOn: "2026-10-01", asOf: today, hmrc, companiesHouse });
     clients.set(data.profile.key, { data, xero: new MockXero(data, now), hmrc, calendar });
   }
-  return { today, clients, approvals: seedApprovals(datasets, today), audit: [], now };
+  return { today, clients, approvals: seedApprovals(datasets, today), audit: [], agentNotes: new Map(), now };
 }
 
 export class DecisionError extends Error {}

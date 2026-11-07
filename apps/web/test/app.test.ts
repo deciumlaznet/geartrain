@@ -234,3 +234,55 @@ describe("accounts", () => {
     expect(() => createApp(state, { users, sessionSecret: "too short", secureCookies: true })).toThrow(/32/);
   });
 });
+
+describe("intake agent on upload", () => {
+  async function uploadWith(model: import("@geartrain/agents").Model, content: string) {
+    const runs: Promise<void>[] = [];
+    raw = createApp(state, { users, sessionSecret: SECRET, secureCookies: true }, { model, onRun: (r) => runs.push(r) });
+    const f = new FormData();
+    f.append("file", new File([content], "letter.txt", { type: "text/plain" }));
+    f.append("kind", "letter");
+    const res = await app.request("/clients/northgate/documents", { method: "POST", body: f });
+    await Promise.all(runs);
+    const docId = state.audit.find((e) => e.action === "document.uploaded")!.refs[0]!;
+    return { res, docId };
+  }
+
+  it("raises a bank-details request as a blocked approval, never changes it, and shows the agent's note", async () => {
+    const { call, say, ScriptedModel } = await import("@geartrain/agents");
+    const supplier = (await state.clients.get("northgate")!.xero.listContacts({ kind: "supplier" }))[0]!;
+    const model = new ScriptedModel([
+      [call("change_supplier_bank_details", { contactId: supplier.id, newAccountAsWritten: "11-22-33 44556677" }), call("flag_for_review", { reason: "Asks to change bank details", warnings: ["Call the supplier first"] })],
+      [say("This letter asks to change bank details. Nothing was changed; it is with your team to verify.")],
+    ]);
+    const before = state.approvals.length;
+    const { res, docId } = await uploadWith(model, "New bank details: 11-22-33 44556677");
+    expect(res.headers.get("location")).toContain("reading");
+    const raised = state.approvals.slice(before);
+    expect(raised.map((a) => [a.kind, a.risk, a.status])).toEqual([
+      ["supplierBankDetails", "blocked", "pending"],
+      ["reviewDocument", "reversible", "pending"],
+    ]);
+    expect(raised[0]!.requiresVerification).toMatch(/Call the supplier/);
+    expect((await state.clients.get("northgate")!.xero.getContact(supplier.id))!.bankAccount).not.toBe("11-22-33 44556677");
+    expect(state.audit.filter((e) => e.action === "approval.raised")).toHaveLength(2);
+    const page = await (await app.request(`/clients/northgate/documents/${docId}`)).text();
+    expect(page).toContain("Nothing was changed");
+    expect(page).toContain(raised[0]!.id);
+  });
+
+  it("records a failed run and leaves the document for a person", async () => {
+    const { ScriptedModel } = await import("@geartrain/agents");
+    const { docId } = await uploadWith(new ScriptedModel([]), "anything");
+    expect(state.agentNotes.get(docId)!.status).toBe("failed");
+    expect(state.audit.at(-1)).toMatchObject({ action: "agent.failed", refs: [docId] });
+  });
+
+  it("stores only, and says so, when no model is configured", async () => {
+    const f = new FormData();
+    f.append("file", new File(["hello"], "a.txt", { type: "text/plain" }));
+    const res = await app.request("/clients/northgate/documents", { method: "POST", body: f });
+    expect(decodeURIComponent(res.headers.get("location")!)).toContain("switched off");
+    expect(state.agentNotes.size).toBe(0);
+  });
+});

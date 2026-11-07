@@ -6,7 +6,9 @@ import { Hono, type Context, type MiddlewareHandler } from "hono";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
+import type { Model } from "@geartrain/agents";
 import { NotSupportedError } from "@geartrain/connectors";
+import { processDocument } from "./agents.ts";
 import { canSeeClient, LoginThrottle, SESSION_COOKIE, SESSION_HOURS, type User, type UserDirectory } from "./auth.ts";
 import { decide, DecisionError, type DemoState } from "./state.ts";
 import { ApprovalCard, AuditTable, ClientPage, gbp, Home, Layout, LoginPage, longDate, TaskTable } from "./views.tsx";
@@ -23,9 +25,16 @@ export interface AuthOptions {
   throttle?: LoginThrottle;
 }
 
+export interface AgentOptions {
+  /** The model behind the agents. Without one (no ANTHROPIC_API_KEY), uploads are stored only. */
+  model?: Model;
+  /** Called with each background agent run, so tests can wait for it. */
+  onRun?: (run: Promise<void>) => void;
+}
+
 type Env = { Variables: { user: User } };
 
-export function createApp(state: DemoState, auth: AuthOptions) {
+export function createApp(state: DemoState, auth: AuthOptions, agents: AgentOptions = {}) {
   if (auth.sessionSecret.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters");
   const app = new Hono<Env>();
   const throttle = auth.throttle ?? new LoginThrottle();
@@ -200,7 +209,12 @@ export function createApp(state: DemoState, auth: AuthOptions) {
         kind,
       });
       state.audit.push({ at: state.now(), actor: actor(c), clientKey: cs.data.profile.key, action: "document.uploaded", refs: [doc.id], detail: doc.fileName });
-      return c.redirect(`${back}?msg=${encodeURIComponent(`Uploaded ${doc.fileName}. The agent will pick it up.`)}`, 303);
+      if (agents.model) {
+        const run = processDocument(state, agents.model, cs, doc);
+        agents.onRun?.(run);
+      }
+      const next = agents.model ? "The intake agent is reading it now." : "Agents are switched off in this demo, so it is stored only.";
+      return c.redirect(`${back}?msg=${encodeURIComponent(`Uploaded ${doc.fileName}. ${next}`)}`, 303);
     } catch (e) {
       if (e instanceof NotSupportedError) return c.redirect(`${back}?err=${encodeURIComponent("The demo takes plain-text files only")}`, 303);
       throw e;
@@ -217,6 +231,7 @@ export function createApp(state: DemoState, auth: AuthOptions) {
         <p class="sub">
           {doc.kind} · received {longDate(doc.receivedOn)}
         </p>
+        <AgentNoteView note={state.agentNotes.get(doc.id)} keyName={cs.data.profile.key} />
         <pre>{doc.content}</pre>
       </ClientPage>,
     );
@@ -372,3 +387,20 @@ const DocTable = (p: { keyName: string; docs: { id: string; fileName: string; ki
     </table>
   </div>
 );
+
+const AgentNoteView = (p: { note: import("./state.ts").AgentNote | undefined; keyName: string }) => {
+  if (!p.note) return null;
+  const { note } = p;
+  return (
+    <div class="card">
+      <strong>Intake agent:</strong>{" "}
+      {note.status === "working" ? "reading this document now. Refresh in a moment." : note.summary}
+      {note.draftBillIds.length > 0 && <p class="sub">Draft bills: {note.draftBillIds.join(", ")} (drafts only; nothing is approved or paid).</p>}
+      {note.approvalIds.length > 0 && (
+        <p class="sub">
+          Raised for a person: <a href={`/clients/${p.keyName}/approvals`}>{note.approvalIds.join(", ")}</a>
+        </p>
+      )}
+    </div>
+  );
+};
