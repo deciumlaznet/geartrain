@@ -286,3 +286,29 @@ describe("intake agent on upload", () => {
     expect(state.agentNotes.size).toBe(0);
   });
 });
+
+describe("credit control agent", () => {
+  it("drafts reminders, raises each send for approval, and only staff can start it", async () => {
+    const { call, say, ScriptedModel } = await import("@geartrain/agents");
+    const inv = (await state.clients.get("northgate")!.xero.listInvoices({ status: ["authorised", "partlyPaid"] })).find((i) => i.dueDate < TODAY)!;
+    const model = new ScriptedModel([
+      [call("draft_reminder", { invoiceId: inv.id, stage: "firm", subject: `Invoice ${inv.number} is overdue`, body: "Our records show this invoice is overdue. Please arrange payment this week." })],
+      [call("propose_send", { invoiceId: inv.id, reason: "Firm stage" })],
+      [say("One firm reminder drafted for approval.")],
+    ]);
+    const runs: Promise<void>[] = [];
+    raw = createApp(state, { users, sessionSecret: SECRET, secureCookies: true }, { model, onRun: (r) => runs.push(r) });
+    const before = state.approvals.length;
+    await app.request("/clients/northgate/credit-control", { method: "POST" });
+    await Promise.all(runs);
+    const raised = state.approvals.slice(before);
+    expect(raised.map((a) => [a.kind, a.risk])).toEqual([["sendReminder", "externalFinancial"]]);
+    expect(state.reminders).toHaveLength(1);
+    const page = await (await app.request("/clients/northgate/ledger")).text();
+    expect(page).toContain("One firm reminder drafted");
+    expect(page).toContain(raised[0]!.id);
+
+    await signIn("hannah@northgate.example");
+    expect((await app.request("/clients/northgate/credit-control", { method: "POST" })).status).toBe(404);
+  });
+});

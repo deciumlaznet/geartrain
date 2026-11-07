@@ -8,7 +8,7 @@ import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
 import type { Model } from "@geartrain/agents";
 import { NotSupportedError } from "@geartrain/connectors";
-import { processDocument } from "./agents.ts";
+import { processCreditControl, processDocument } from "./agents.ts";
 import { canSeeClient, LoginThrottle, SESSION_COOKIE, SESSION_HOURS, type User, type UserDirectory } from "./auth.ts";
 import { decide, DecisionError, type DemoState } from "./state.ts";
 import { ApprovalCard, AuditTable, ClientPage, gbp, Home, Layout, LoginPage, longDate, TaskTable } from "./views.tsx";
@@ -289,8 +289,26 @@ export function createApp(state: DemoState, auth: AuthOptions, agents: AgentOpti
         ) : (
           <p class="sub">All reconciled.</p>
         )}
+        <CreditControl
+          keyName={cs.data.profile.key}
+          staff={c.get("user").role === "staff"}
+          agentsOn={!!agents.model}
+          run={state.creditRuns.get(cs.data.profile.key)}
+          reminders={state.reminders.filter((r) => r.clientKey === cs.data.profile.key)}
+        />
       </ClientPage>,
     );
+  });
+
+  app.post("/clients/:key/credit-control", staffOnly, async (c) => {
+    const cs = clientFor(c, c.req.param("key"));
+    if (!cs) return notFound();
+    const back = `/clients/${cs.data.profile.key}/ledger`;
+    if (!agents.model) return c.redirect(`${back}?err=${encodeURIComponent("Agents are switched off in this demo")}`, 303);
+    if (state.creditRuns.get(cs.data.profile.key)?.status === "working") return c.redirect(back, 303);
+    state.audit.push({ at: state.now(), actor: actor(c), clientKey: cs.data.profile.key, action: "creditControl.started", refs: [] });
+    agents.onRun?.(processCreditControl(state, agents.model, cs));
+    return c.redirect(back, 303);
   });
 
   app.get("/clients/:key/history", (c) => {
@@ -404,3 +422,54 @@ const AgentNoteView = (p: { note: import("./state.ts").AgentNote | undefined; ke
     </div>
   );
 };
+
+const CreditControl = (p: {
+  keyName: string;
+  staff: boolean;
+  agentsOn: boolean;
+  run: { status: string; summary?: string } | undefined;
+  reminders: import("./state.ts").ReminderNote[];
+}) => (
+  <section>
+    <h2>Credit control</h2>
+    {p.run?.status === "working" ? (
+      <p class="sub">The credit control agent is reviewing overdue invoices. Refresh in a minute.</p>
+    ) : p.run?.summary ? (
+      <div class="card">{p.run.summary}</div>
+    ) : null}
+    {p.staff &&
+      (p.agentsOn ? (
+        <form class="inline" method="post" action={`/clients/${p.keyName}/credit-control`}>
+          <button type="submit">Draft today's reminders</button>
+        </form>
+      ) : (
+        <p class="sub">Agents are switched off in this demo (no Anthropic API key).</p>
+      ))}
+    {p.reminders.length > 0 && (
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Stage</th>
+              <th>To</th>
+              <th>Subject</th>
+              <th>Approval</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.reminders.map((r) => (
+              <tr>
+                <td>{r.invoiceNumber}</td>
+                <td>{r.stage}</td>
+                <td>{r.to}</td>
+                <td>{r.subject}</td>
+                <td>{r.approvalId ? <a href={`/clients/${p.keyName}/approvals`}>{r.approvalId}</a> : "not proposed"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+);

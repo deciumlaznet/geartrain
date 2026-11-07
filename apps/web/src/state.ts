@@ -14,7 +14,7 @@ export type RiskClass = "read" | "reversible" | "externalFinancial" | "blocked";
 export interface Approval {
   id: string;
   clientKey: string;
-  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice" | "reviewDocument";
+  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice" | "reviewDocument" | "sendReminder" | "lateInterest";
   title: string;
   detail: string;
   amountPence?: number;
@@ -58,12 +58,28 @@ export interface AgentNote {
   approvalIds: string[];
 }
 
+/** A reminder the credit control agent drafted. Nothing is emailed in the demo. */
+export interface ReminderNote {
+  clientKey: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  to: string;
+  stage: string;
+  subject: string;
+  body: string;
+  approvalId?: string;
+  draftedOn: ISODate;
+}
+
 export interface DemoState {
   today: ISODate;
   clients: Map<string, ClientState>;
   approvals: Approval[];
   audit: AuditEvent[];
   agentNotes: Map<string, AgentNote>;
+  reminders: ReminderNote[];
+  /** Clients with a credit control run in progress. */
+  creditRuns: Map<string, { status: "working" | "done" | "failed"; summary?: string }>;
   now: () => string;
 }
 
@@ -78,7 +94,7 @@ export async function createDemoState(today: ISODate, now: () => string = () => 
     const calendar = await buildCalendar(data, { rules, params, onboardedOn: "2026-10-01", asOf: today, hmrc, companiesHouse });
     clients.set(data.profile.key, { data, xero: new MockXero(data, now), hmrc, calendar });
   }
-  return { today, clients, approvals: seedApprovals(datasets, today), audit: [], agentNotes: new Map(), now };
+  return { today, clients, approvals: seedApprovals(datasets, today), audit: [], agentNotes: new Map(), reminders: [], creditRuns: new Map(), now };
 }
 
 export class DecisionError extends Error {}
