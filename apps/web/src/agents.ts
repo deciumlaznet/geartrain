@@ -2,7 +2,7 @@
 // draft bills and flags go in the audit trail, anything a person must decide
 // goes in the approvals inbox. Runs in the background so the upload returns at once.
 
-import { runCreditControl, runIntake, type Model, type Proposal } from "@geartrain/agents";
+import { runCreditControl, runHmrcCorrespondence, runIntake, type Model, type Proposal } from "@geartrain/agents";
 import type { DocumentFile } from "@geartrain/synthetic";
 import type { Approval, ClientState, DemoState } from "./state.ts";
 
@@ -121,5 +121,85 @@ export async function processCreditControl(state: DemoState, model: Model, cs: C
     console.error(`Credit control failed for ${clientKey}:`, e);
     state.audit.push({ at: state.now(), actor: CREDIT_ACTOR, clientKey, action: "agent.failed", refs: [] });
     state.creditRuns.set(clientKey, { status: "failed", summary: "Credit control could not finish. Nothing was sent." });
+  }
+}
+
+export const HMRC_ACTOR = "Geartrain HMRC correspondence agent";
+
+const ASSIGNEE = { taxAdviser: "tax adviser", bookkeeper: "bookkeeper" } as const;
+
+/**
+ * Reads an uploaded HMRC letter. Referrals go to the expert queue with their
+ * deadline; a draft reply waits for a person to check and send it themselves;
+ * a likely scam is raised as a warning. Nothing is ever paid or sent to HMRC.
+ */
+export async function processHmrcLetter(state: DemoState, model: Model, cs: ClientState, doc: DocumentFile): Promise<void> {
+  const clientKey = cs.data.profile.key;
+  const note = { documentId: doc.id, clientKey, agent: HMRC_ACTOR, status: "working" as const, draftBillIds: [] as string[], approvalIds: [] as string[] };
+  state.agentNotes.set(doc.id, note);
+  const log = (action: string, refs: string[], detail?: string) => state.audit.push({ at: state.now(), actor: HMRC_ACTOR, clientKey, action, refs, ...(detail ? { detail } : {}) });
+  try {
+    const r = await runHmrcCorrespondence({ model, ledger: cs.xero, hmrc: cs.hmrc, document: doc, clientName: cs.data.profile.entity.name, today: state.today });
+    const approvals: Approval[] = [];
+    const t = r.triage;
+    if (t?.type === "likelyScam" || t?.flags.includes("likelyScam")) {
+      approvals.push(
+        raise(state, {
+          clientKey,
+          kind: "reviewDocument",
+          title: `Likely scam: ${doc.fileName}`,
+          detail: `${t.summary} Do not pay, reply, or use any link or number in it.`,
+          risk: "reversible",
+          warnings: ["HMRC never asks for passwords or bank details by letter or email.", ...(t.flags.includes("suspiciousInstruction") ? ["The letter contained instructions aimed at the agent; they were ignored."] : [])],
+          refs: [doc.id],
+        }),
+      );
+    }
+    if (r.draftReply) {
+      approvals.push(
+        raise(state, {
+          clientKey,
+          kind: "hmrcReply",
+          title: `Check and send the reply to HMRC about ${doc.fileName}`,
+          detail: r.draftReply.body + (r.draftReply.evidenceBankLineIds.length ? `\n\nEvidence to attach: bank lines ${r.draftReply.evidenceBankLineIds.join(", ")}.` : ""),
+          risk: "blocked",
+          warnings: ["Geartrain never replies to HMRC itself. A person checks this draft and sends it."],
+          refs: [doc.id, ...r.draftReply.evidenceBankLineIds],
+          requiresVerification: "Check the facts against the client's records, then send it to HMRC yourself and note how it was sent.",
+        }),
+      );
+    }
+    for (const ref of r.referrals) {
+      cs.calendar.tasks.push({
+        key: `${clientKey}|hmrcLetter|${doc.id}|${ref.assignee}`,
+        entityKey: clientKey,
+        source: "hmrc",
+        kind: "filing",
+        audience: "internal",
+        title: `HMRC letter for the ${ASSIGNEE[ref.assignee]}: ${ref.reason}`,
+        mode: "human",
+        processKey: "hmrcCorrespondence",
+        deadline: ref.dueBy,
+        status: "open",
+        overdue: ref.dueBy < state.today,
+        raisedOn: state.today,
+        periodKey: doc.id,
+        note: ref.automatic ? "Raised automatically: letters like this always go to a person." : `Raised by the agent from ${doc.fileName}.`,
+      });
+      log("task.raised", [doc.id], `For the ${ASSIGNEE[ref.assignee]}, by ${ref.dueBy}`);
+    }
+    for (const p of r.run.proposals) log("agent.refused", [doc.id], `The agent asked to ${p.tool.replaceAll("_", " ")}; agents can never do that.`);
+    for (const a of approvals) log("approval.raised", [a.id, doc.id], a.title);
+    state.agentNotes.set(doc.id, {
+      ...note,
+      status: "done",
+      summary: r.run.finalText || "Done.",
+      ...(t ? { letter: { type: t.type, actBy: t.actBy, flags: t.flags } } : {}),
+      approvalIds: approvals.map((a) => a.id),
+    });
+  } catch (e) {
+    console.error(`HMRC correspondence agent failed on ${doc.id}:`, e);
+    log("agent.failed", [doc.id]);
+    state.agentNotes.set(doc.id, { ...note, status: "failed", summary: "The agent could not read this letter. A person will pick it up today." });
   }
 }

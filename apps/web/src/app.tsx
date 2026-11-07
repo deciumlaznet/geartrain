@@ -8,13 +8,13 @@ import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
 import type { Model } from "@geartrain/agents";
 import { NotSupportedError } from "@geartrain/connectors";
-import { processCreditControl, processDocument } from "./agents.ts";
+import { processCreditControl, processDocument, processHmrcLetter } from "./agents.ts";
 import { canSeeClient, LoginThrottle, SESSION_COOKIE, SESSION_HOURS, type User, type UserDirectory } from "./auth.ts";
 import { decide, DecisionError, type DemoState } from "./state.ts";
 import { ApprovalCard, AuditTable, ClientPage, gbp, Home, Layout, LoginPage, longDate, TaskTable } from "./views.tsx";
 
 const MAX_UPLOAD_BYTES = 1_000_000;
-const DOC_KINDS = ["supplierInvoice", "receipt", "letter", "bankStatement", "contract"] as const;
+const DOC_KINDS = ["supplierInvoice", "receipt", "letter", "hmrcLetter", "bankStatement", "contract"] as const;
 
 export interface AuthOptions {
   users: UserDirectory;
@@ -210,10 +210,10 @@ export function createApp(state: DemoState, auth: AuthOptions, agents: AgentOpti
       });
       state.audit.push({ at: state.now(), actor: actor(c), clientKey: cs.data.profile.key, action: "document.uploaded", refs: [doc.id], detail: doc.fileName });
       if (agents.model) {
-        const run = processDocument(state, agents.model, cs, doc);
+        const run = doc.kind === "hmrcLetter" ? processHmrcLetter(state, agents.model, cs, doc) : processDocument(state, agents.model, cs, doc);
         agents.onRun?.(run);
       }
-      const next = agents.model ? "The intake agent is reading it now." : "Agents are switched off in this demo, so it is stored only.";
+      const next = agents.model ? (doc.kind === "hmrcLetter" ? "The HMRC correspondence agent is reading it now." : "The intake agent is reading it now.") : "Agents are switched off in this demo, so it is stored only.";
       return c.redirect(`${back}?msg=${encodeURIComponent(`Uploaded ${doc.fileName}. ${next}`)}`, 303);
     } catch (e) {
       if (e instanceof NotSupportedError) return c.redirect(`${back}?err=${encodeURIComponent("The demo takes plain-text files only")}`, 303);
@@ -411,8 +411,20 @@ const AgentNoteView = (p: { note: import("./state.ts").AgentNote | undefined; ke
   const { note } = p;
   return (
     <div class="card">
-      <strong>Intake agent:</strong>{" "}
+      <strong>{note.agent ? "HMRC correspondence agent" : "Intake agent"}:</strong>{" "}
       {note.status === "working" ? "reading this document now. Refresh in a moment." : note.summary}
+      {note.letter && (
+        <p class="sub">
+          {note.letter.type}
+          {note.letter.actBy ? ` · a person must act by ${longDate(note.letter.actBy)}` : ""}
+          {note.letter.flags.map((f) => (
+            <>
+              {" "}
+              <span class={f === "likelyScam" || f === "suspiciousInstruction" ? "tag over" : "tag"}>{f}</span>
+            </>
+          ))}
+        </p>
+      )}
       {note.draftBillIds.length > 0 && <p class="sub">Draft bills: {note.draftBillIds.join(", ")} (drafts only; nothing is approved or paid).</p>}
       {note.approvalIds.length > 0 && (
         <p class="sub">

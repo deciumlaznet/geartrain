@@ -14,7 +14,7 @@ export type RiskClass = "read" | "reversible" | "externalFinancial" | "blocked";
 export interface Approval {
   id: string;
   clientKey: string;
-  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice" | "reviewDocument" | "sendReminder" | "lateInterest";
+  kind: "payBills" | "approveBill" | "discardDuplicate" | "supplierBankDetails" | "sendFinalNotice" | "reviewDocument" | "sendReminder" | "lateInterest" | "hmrcReply";
   title: string;
   detail: string;
   amountPence?: number;
@@ -53,7 +53,11 @@ export interface AgentNote {
   documentId: string;
   clientKey: string;
   status: "working" | "done" | "failed";
+  /** Which agent read it; the intake agent when absent. */
+  agent?: string;
   summary?: string;
+  /** For HMRC letters: what the letter is and when a person must act. */
+  letter?: { type: string; actBy: string | null; flags: string[] };
   draftBillIds: string[];
   approvalIds: string[];
 }

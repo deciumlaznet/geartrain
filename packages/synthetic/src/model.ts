@@ -163,7 +163,7 @@ export interface Letter {
 
 export interface DocumentFile {
   id: string;
-  kind: "supplierInvoice" | "receipt" | "letter" | "bankStatement" | "contract";
+  kind: "supplierInvoice" | "receipt" | "letter" | "hmrcLetter" | "bankStatement" | "contract";
   fileName: string;
   mimeType: "text/plain";
   receivedOn: ISODate;

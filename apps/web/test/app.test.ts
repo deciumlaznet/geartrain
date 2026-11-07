@@ -312,3 +312,48 @@ describe("credit control agent", () => {
     expect((await app.request("/clients/northgate/credit-control", { method: "POST" })).status).toBe(404);
   });
 });
+
+describe("HMRC correspondence agent on upload", () => {
+  async function uploadLetter(model: import("@geartrain/agents").Model, content: string) {
+    const runs: Promise<void>[] = [];
+    raw = createApp(state, { users, sessionSecret: SECRET, secureCookies: true }, { model, onRun: (r) => runs.push(r) });
+    const f = new FormData();
+    f.append("file", new File([content], "hmrc.txt", { type: "text/plain" }));
+    f.append("kind", "hmrcLetter");
+    const res = await app.request("/clients/northgate/documents", { method: "POST", body: f });
+    await Promise.all(runs);
+    const docId = state.audit.find((e) => e.action === "document.uploaded")!.refs[0]!;
+    return { res, docId };
+  }
+
+  it("puts a penalty notice in the expert queue with its appeal date, and never pays or replies", async () => {
+    const { call, say, ScriptedModel } = await import("@geartrain/agents");
+    const model = new ScriptedModel([
+      [call("record_letter", { type: "penaltyNotice", tax: "vat", letterDate: "2026-10-20", summary: "A £200 VAT late-filing penalty.", flags: [] }), call("pay_hmrc", { amountPence: 20000, reference: "PEN" })],
+      [say("This is a VAT penalty. Your tax adviser will look at an appeal before 19 November.")],
+    ]);
+    const before = state.approvals.length;
+    const { res, docId } = await uploadLetter(model, "Penalty notice, 20 October 2026. VAT return filed late. £200.");
+    expect(res.headers.get("location")).toContain("HMRC%20correspondence%20agent");
+    expect(state.approvals.length).toBe(before);
+    const task = state.clients.get("northgate")!.calendar.tasks.find((t) => t.periodKey === docId)!;
+    expect(task).toMatchObject({ audience: "internal", deadline: "2026-11-19", processKey: "hmrcCorrespondence" });
+    expect(state.audit.some((e) => e.action === "agent.refused" && e.detail?.includes("pay hmrc"))).toBe(true);
+    expect(await (await app.request("/clients/northgate/expert")).text()).toContain("tax adviser");
+    const page = await (await app.request(`/clients/northgate/documents/${docId}`)).text();
+    expect(page).toContain("HMRC correspondence agent");
+    expect(page).toContain("19 Nov 2026");
+  });
+
+  it("raises a likely scam as a warning, not as work", async () => {
+    const { call, say, ScriptedModel } = await import("@geartrain/agents");
+    const model = new ScriptedModel([
+      [call("record_letter", { type: "likelyScam", tax: "unknown", letterDate: "", summary: "A refund phishing letter.", flags: ["suspiciousInstruction"] })],
+      [say("This is a scam. Do not reply or pay.")],
+    ]);
+    const before = state.approvals.length;
+    const { docId } = await uploadLetter(model, "HMRC refund: confirm your password at http://hmrc-refund-claim.example");
+    expect(state.approvals.slice(before).map((a) => [a.kind, a.title])).toEqual([["reviewDocument", "Likely scam: hmrc.txt"]]);
+    expect(state.clients.get("northgate")!.calendar.tasks.some((t) => t.periodKey === docId)).toBe(false);
+  });
+});
