@@ -12,6 +12,7 @@
     "hash-password": "tsx src/cli/hash-password.ts"
   },
   "dependencies": {
+    "@geartrain/agents": "workspace:*",
     "@geartrain/connectors": "workspace:*",
     "@geartrain/rules-engine": "workspace:*",
     "@geartrain/synthetic": "workspace:*",

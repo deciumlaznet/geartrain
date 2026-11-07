@@ -18,10 +18,13 @@ review the judgement calls.
 | `packages/db` | Postgres schema (Drizzle), migrations, and row-level security keeping clients apart |
 | `packages/connectors` | Interfaces for the ledger (Xero first), HMRC and Companies House, with in-memory stand-ins that serve the fake clients and keep the real services' limits |
 | `packages/worker` | Builds each client's obligations calendar from the rules engine, HMRC obligations and Companies House dates |
+| `packages/agents` | The agent loop and the first agent (document intake). Every tool has a risk class: reads and drafts run; anything that moves money waits in the approvals inbox; bank-detail changes are never done by an agent |
 | `apps/web` | The demo web app: client list, obligations calendar, approvals inbox, document upload, money owed, track record, expert queue and audit trail, plus a JSON API |
 | `packages/synthetic` | Three fake clients with April 2022 to October 2026 histories: ledger, bank feed, payroll, filings, letters, supplier documents and planted edge cases for red-teaming |
 
-Still to come: database persistence for the web app, the Smartsheet sync, and the agents.
+Still to come: database persistence for the web app, the Smartsheet sync, and agents for the other pilot processes.
+
+Agents run only when the `ANTHROPIC_API_KEY` secret is set; without it the demo stores uploads and says agents are off.
 
 ## Principles the code holds to
 

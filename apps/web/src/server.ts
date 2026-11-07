@@ -3,6 +3,7 @@
 //   GEARTRAIN_USERS  JSON array of invited users; hash passwords with
 //                    `pnpm --filter @geartrain/web hash-password`
 import { serve } from "@hono/node-server";
+import { ClaudeModel } from "@geartrain/agents";
 import { createApp } from "./app.tsx";
 import { UserDirectory } from "./auth.ts";
 import { createDemoState } from "./state.ts";
@@ -27,6 +28,8 @@ const state = await createDemoState(today);
 const port = Number(process.env.PORT ?? 3000);
 // Cookies are HTTPS-only unless explicitly running on plain http locally.
 const secureCookies = process.env.INSECURE_LOCAL_COOKIES !== "1";
-serve({ fetch: createApp(state, { users, sessionSecret, secureCookies }).fetch, port, hostname: "0.0.0.0" }, () =>
-  console.log(`Geartrain demo on port ${port} (as of ${today}), ${users.size} invited user(s)`),
+// Agents run only with an Anthropic API key (Replit secret ANTHROPIC_API_KEY).
+const model = process.env.ANTHROPIC_API_KEY ? new ClaudeModel() : undefined;
+serve({ fetch: createApp(state, { users, sessionSecret, secureCookies }, { model }).fetch, port, hostname: "0.0.0.0" }, () =>
+  console.log(`Geartrain demo on port ${port} (as of ${today}), ${users.size} invited user(s), agents ${model ? `on (${model.name})` : "off: no ANTHROPIC_API_KEY"}`),
 );
